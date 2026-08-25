@@ -19,11 +19,12 @@ POSTGRES_PASSWORD=<generated-random-secret>
 Create `/etc/rook/caddy.env` outside the repository:
 
 ```dotenv
-ROOK_ORIGIN_HOST=<vps-ip-address>
 ROOK_ORIGIN_TOKEN=<generated-random-secret>
 ```
 
-Store `ORIGIN_HOST` and the matching `ORIGIN_TOKEN` as encrypted Worker secrets. Never commit either populated environment file.
+Import `infra/rook-origin.caddy` before the VPS origin site and add `import rook-origin` inside that site block. The origin site remains unchanged for ordinary requests; only requests carrying the matching token are routed to Rook.
+
+Store the HTTPS origin hostname as `ORIGIN_HOST` and the matching token as `ORIGIN_TOKEN` using Wrangler secrets. Never commit either populated environment file. Workers cannot fetch an IP literal, so `ORIGIN_HOST` must be a DNS hostname.
 
 ## Start and inspect
 
@@ -35,6 +36,8 @@ curl -fsS https://swoop.video/health
 ```
 
 ## Update
+
+Successful `main` builds deploy automatically through the dedicated `rookdeploy` SSH identity. For a manual server-side update:
 
 ```bash
 git pull --ff-only

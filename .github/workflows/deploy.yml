@@ -1,0 +1,49 @@
+name: Deploy Rook
+
+on:
+  workflow_run:
+    workflows: ["Verify Rook"]
+    types: [completed]
+  workflow_dispatch:
+
+concurrency:
+  group: rook-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Configure dedicated deploy key
+        shell: bash
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/rookdeploy
+          chmod 600 ~/.ssh/rookdeploy
+          printf '%s\n' "${{ secrets.VPS_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Update production containers
+        shell: bash
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          ssh -i ~/.ssh/rookdeploy "$VPS_USER@$VPS_HOST" <<'REMOTE'
+            set -euo pipefail
+            cd /opt/rook-compliance
+            git fetch --prune origin main
+            git checkout main
+            git pull --ff-only origin main
+            docker compose up -d --build --remove-orphans
+            docker compose ps
+            curl --fail --silent --show-error http://127.0.0.1:4100/health
+          REMOTE

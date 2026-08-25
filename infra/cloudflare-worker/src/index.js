@@ -2,9 +2,9 @@ export default {
   async fetch(request, env) {
     const incoming = new URL(request.url);
     const origin = new URL(request.url);
-    origin.protocol = 'http:';
+    origin.protocol = 'https:';
     origin.hostname = env.ORIGIN_HOST;
-    origin.port = '80';
+    origin.port = '443';
 
     const headers = new Headers(request.headers);
     headers.set('X-Rook-Origin-Token', env.ORIGIN_TOKEN);

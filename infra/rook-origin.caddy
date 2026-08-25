@@ -1,4 +1,4 @@
-http://{$ROOK_ORIGIN_HOST} {
+(rook-origin) {
 	@rook_authorized header X-Rook-Origin-Token {$ROOK_ORIGIN_TOKEN}
 
 	handle @rook_authorized {
@@ -25,5 +25,4 @@ http://{$ROOK_ORIGIN_HOST} {
 		}
 	}
 
-	respond 403
 }
