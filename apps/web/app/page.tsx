@@ -23,7 +23,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? DEFAULT_API_URL;
 const DOCUMENT_AI_URL = process.env.NEXT_PUBLIC_DOCUMENT_AI_URL ?? `${API_URL}/document-ai`;
 const ASSET_PREFIX = process.env.NODE_ENV === 'production' ? '/corvus' : '';
 const brandAssets = {
-  mark: `${ASSET_PREFIX}/brand/rook-mark.webp`,
+  mark: `${ASSET_PREFIX}/brand/rook-bird.png`,
   terrain: `url("${ASSET_PREFIX}/brand/terrain-texture.png")`,
   industrial: `url("${ASSET_PREFIX}/brand/industrial-silhouette.png")`,
   paper: `url("${ASSET_PREFIX}/brand/paper-texture-v2.png")`,
