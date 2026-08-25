@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { facilities, obligations, proposals, submissions } from './seed.js';
+import { auditEvents, facilities, obligations, proposals, submissions } from './seed.js';
 import type { CreateObligationInput, ImportedProposalInput, MobileChange, Obligation, ObligationStatus, Proposal, SubmissionReviewStatus } from './types.js';
 
 const prisma = new PrismaClient();
@@ -76,7 +76,17 @@ export class PrismaRookStore {
           reading: submission.reading,
           photoCount: submission.photoCount,
           deviceId: 'seed',
+          reviewStatus: submission.reviewStatus,
+          reviewNote: submission.reviewNote,
+          reviewedAt: submission.reviewedAt ? new Date(submission.reviewedAt) : null,
         },
+      });
+    }
+    for (const event of auditEvents) {
+      await prisma.auditEvent.upsert({
+        where: { id: event.id },
+        update: { actorId: event.actorId, action: event.action, entityType: event.entityType, entityId: event.entityId, metadata: JSON.parse(event.detail), createdAt: new Date(event.createdAt) },
+        create: { id: event.id, actorId: event.actorId, action: event.action, entityType: event.entityType, entityId: event.entityId, metadata: JSON.parse(event.detail), createdAt: new Date(event.createdAt) },
       });
     }
   }

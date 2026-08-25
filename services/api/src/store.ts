@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { facilities as seededFacilities, obligations as seededObligations, proposals as seededProposals, submissions as seededSubmissions } from './seed.js';
+import { auditEvents as seededAuditEvents, facilities as seededFacilities, obligations as seededObligations, proposals as seededProposals, submissions as seededSubmissions } from './seed.js';
 import type { AuditEventRecord, CreateObligationInput, DocumentRecord, ImportedProposalInput, MobileChange, Obligation, ObligationStatus, Proposal, SubmissionReviewStatus } from './types.js';
 
 export class RookStore {
@@ -8,7 +8,7 @@ export class RookStore {
   proposals = structuredClone(seededProposals);
   submissions = structuredClone(seededSubmissions);
   documents: DocumentRecord[] = [{ id: 'doc-demo-approval', facilityId: 'fac-north-ridge', name: 'North_Ridge_Approval.pdf', createdAt: '2026-08-25T08:00:00.000Z' }];
-  auditEvents: AuditEventRecord[] = [];
+  auditEvents: AuditEventRecord[] = structuredClone(seededAuditEvents);
 
   async initialize() {}
 

@@ -23,7 +23,15 @@ describe('RookStore', () => {
   });
 
   it('reports dashboard totals from current state', () => {
-    expect(store.dashboard()).toMatchObject({ openObligations: 4, attentionRequired: 1, averageReadiness: 89, pendingReviews: 3 });
+    expect(store.dashboard()).toMatchObject({ openObligations: 3, attentionRequired: 1, averageReadiness: 89, pendingReviews: 3 });
+  });
+
+  it('seeds multiple evidence packages with traceable audit history', () => {
+    const fugitive = store.submissions.find(item => item.obligationId === 'obl-fugitive-01');
+    expect(store.submissions).toHaveLength(3);
+    expect(fugitive).toMatchObject({ reviewStatus: 'APPROVED', reading: '426 components · 0 exceedances' });
+    expect(store.listAuditEvents('FieldSubmission', fugitive!.id)).toHaveLength(2);
+    expect(store.listAuditEvents('Obligation', 'obl-ghgrp-01')).toHaveLength(2);
   });
 
   it('creates a complete obligation record and records an audit event', () => {
