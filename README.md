@@ -68,7 +68,7 @@ The web demo includes:
 
 The Android app includes:
 
-- a standalone arm64 APK in the [v0.1.0 GitHub release](https://github.com/yazanbaker94/rook-compliance/releases/tag/v0.1.0), configured for the live `/corvus` API;
+- standalone universal and arm64 APKs in the [v0.1.0 GitHub release](https://github.com/yazanbaker94/rook-compliance/releases/tag/v0.1.0), configured for the live `/corvus` API;
 - on-device SQLite assignment and submission storage;
 - an offline/online status indicator;
 - inspection checklists and readings;
