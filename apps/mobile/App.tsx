@@ -3,6 +3,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import * as Network from 'expo-network';
 import { useEffect, useMemo, useState } from 'react';
+import { SafeAreaProvider, SafeAreaView, initialWindowMetrics } from 'react-native-safe-area-context';
 import {
   ActivityIndicator,
   Alert,
@@ -10,7 +11,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -67,19 +67,21 @@ export default function App() {
     setScreen('capture');
   }
 
-  if (loading) return <SafeAreaView style={styles.loading}><ActivityIndicator color="#174D3C" /><Text>Preparing offline workspace…</Text></SafeAreaView>;
+  if (loading) return <SafeAreaProvider initialMetrics={initialWindowMetrics}><SafeAreaView style={styles.loading}><ActivityIndicator color="#174D3C" /><Text>Preparing offline workspace…</Text></SafeAreaView></SafeAreaProvider>;
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <StatusBar style="dark" />
-      <View style={styles.topBar}>
-        <Pressable onPress={() => setScreen('home')} style={styles.brand}><Text style={styles.brandMark}>R</Text><Text style={styles.brandName}>Rook Field</Text></Pressable>
-        <View style={[styles.connectionPill, !isOnline && styles.connectionOffline]}><View style={[styles.connectionDot, !isOnline && styles.connectionDotOffline]} /><Text style={styles.connectionText}>{isOnline === null ? 'Checking' : isOnline ? 'Online' : 'Offline ready'}</Text></View>
-      </View>
-      {screen === 'home' && <Home assignments={assignments} queuedCount={queuedCount} onOpen={openAssignment} onQueue={() => setScreen('queue')} />}
-      {screen === 'capture' && selected && <Capture assignment={selected} onBack={() => setScreen('home')} onSaved={async () => { await refresh(); setScreen('queue'); }} />}
-      {screen === 'queue' && <Queue submissions={submissions} queuedCount={queuedCount} syncing={syncing} isOnline={Boolean(isOnline)} onBack={() => setScreen('home')} onSync={syncNow} />}
-    </SafeAreaView>
+    <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+      <SafeAreaView style={styles.safe}>
+        <StatusBar style="dark" />
+        <View style={styles.topBar}>
+          <Pressable onPress={() => setScreen('home')} style={styles.brand}><Text style={styles.brandMark}>R</Text><Text style={styles.brandName}>Rook Field</Text></Pressable>
+          <View style={[styles.connectionPill, !isOnline && styles.connectionOffline]}><View style={[styles.connectionDot, !isOnline && styles.connectionDotOffline]} /><Text style={styles.connectionText}>{isOnline === null ? 'Checking' : isOnline ? 'Online' : 'Offline ready'}</Text></View>
+        </View>
+        {screen === 'home' && <Home assignments={assignments} queuedCount={queuedCount} onOpen={openAssignment} onQueue={() => setScreen('queue')} />}
+        {screen === 'capture' && selected && <Capture assignment={selected} onBack={() => setScreen('home')} onSaved={async () => { await refresh(); setScreen('queue'); }} />}
+        {screen === 'queue' && <Queue submissions={submissions} queuedCount={queuedCount} syncing={syncing} isOnline={Boolean(isOnline)} onBack={() => setScreen('home')} onSync={syncNow} />}
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 
@@ -106,7 +108,14 @@ function Capture({ assignment, onBack, onSaved }: { assignment: Assignment; onBa
   const [location, setLocation] = useState<LocationPoint | null>(null);
   const [locating, setLocating] = useState(false);
   const [saving, setSaving] = useState(false);
-  const checklist = ['Discharge point is accessible and unobstructed', 'No visible sheen, odour or abnormal colour observed', 'Reading collected using the approved field method'];
+  const isFugitiveSurvey = assignment.id === 'obl-fugitive-01';
+  const requiresPhoto = assignment.evidenceRequired.toLowerCase().includes('photo');
+  const checklist = isFugitiveSurvey
+    ? ['Survey route and component inventory are complete', 'All detected leaks and exceptions are documented', 'Repair status and follow-up dates are recorded']
+    : ['Discharge point is accessible and unobstructed', 'No visible sheen, odour or abnormal colour observed', 'Reading collected using the approved field method'];
+  const inspectionType = isFugitiveSurvey ? 'Quarterly LDAR survey' : 'Monthly wastewater inspection';
+  const readingLabel = isFugitiveSurvey ? 'Survey result or component count' : 'Discharge reading or observation';
+  const readingPlaceholder = isFugitiveSurvey ? 'e.g. 426 components · 0 exceedances' : 'e.g. pH 7.4';
 
   async function capturePhoto() {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
@@ -130,6 +139,7 @@ function Capture({ assignment, onBack, onSaved }: { assignment: Assignment; onBa
   async function save() {
     if (!checked.every(Boolean)) return Alert.alert('Checklist incomplete', 'Complete each inspection check before saving.');
     if (!reading.trim()) return Alert.alert('Reading required', 'Enter the measured result before saving.');
+    if (requiresPhoto && photos.length === 0) return Alert.alert('Site photo required', 'Attach at least one photo before saving this inspection.');
     setSaving(true);
     try {
       await saveSubmission({
@@ -153,9 +163,9 @@ function Capture({ assignment, onBack, onSaved }: { assignment: Assignment; onBa
 
   return <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}><ScrollView contentContainerStyle={styles.screen}>
     <Pressable onPress={onBack}><Text style={styles.back}>← Assignments</Text></Pressable>
-    <Text style={styles.eyebrow}>{assignment.facility}</Text><Text style={styles.captureTitle}>{assignment.title}</Text><Text style={styles.captureMeta}>{assignment.dueLabel} · Monthly inspection</Text>
+    <Text style={styles.eyebrow}>{assignment.facility}</Text><Text style={styles.captureTitle}>{assignment.title}</Text><Text style={styles.captureMeta}>{assignment.dueLabel} · {inspectionType}</Text>
     <View style={styles.formCard}><Text style={styles.formStep}>01 · CHECKLIST</Text>{checklist.map((label, index) => <Pressable key={label} style={styles.checkRow} onPress={() => setChecked((current) => current.map((value, itemIndex) => itemIndex === index ? !value : value))}><View style={[styles.checkbox, checked[index] && styles.checkboxChecked]}><Text>{checked[index] ? '✓' : ''}</Text></View><Text style={[styles.checkLabel, checked[index] && styles.checkLabelDone]}>{label}</Text></Pressable>)}</View>
-    <View style={styles.formCard}><Text style={styles.formStep}>02 · READING</Text><Text style={styles.inputLabel}>Discharge reading or observation</Text><TextInput value={reading} onChangeText={setReading} placeholder="e.g. pH 7.4" placeholderTextColor="#98A39E" style={styles.input} /><Text style={styles.inputLabel}>Field notes</Text><TextInput value={notes} onChangeText={setNotes} multiline placeholder="Exceptions, maintenance needs, or context…" placeholderTextColor="#98A39E" style={[styles.input, styles.notesInput]} /></View>
+    <View style={styles.formCard}><Text style={styles.formStep}>02 · READING</Text><Text style={styles.inputLabel}>{readingLabel}</Text><TextInput value={reading} onChangeText={setReading} placeholder={readingPlaceholder} placeholderTextColor="#98A39E" style={styles.input} /><Text style={styles.inputLabel}>Field notes</Text><TextInput value={notes} onChangeText={setNotes} multiline placeholder="Exceptions, maintenance needs, or context…" placeholderTextColor="#98A39E" style={[styles.input, styles.notesInput]} /></View>
     <View style={styles.formCard}><Text style={styles.formStep}>03 · EVIDENCE</Text><View style={styles.evidenceButtons}><Pressable style={styles.evidenceButton} onPress={capturePhoto}><Text style={styles.evidenceButtonIcon}>▣</Text><Text style={styles.evidenceButtonTitle}>Take photo</Text><Text style={styles.evidenceButtonMeta}>{photos.length ? `${photos.length} attached` : 'Camera evidence'}</Text></Pressable><Pressable style={styles.evidenceButton} onPress={captureLocation}><Text style={styles.evidenceButtonIcon}>⌖</Text><Text style={styles.evidenceButtonTitle}>{locating ? 'Locating…' : 'Add location'}</Text><Text style={styles.evidenceButtonMeta}>{location ? `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}` : 'Optional GPS tag'}</Text></Pressable></View>{photos.length > 0 && <ScrollView horizontal showsHorizontalScrollIndicator={false}>{photos.map((uri) => <Image key={uri} source={{ uri }} style={styles.thumbnail} />)}</ScrollView>}</View>
     <Pressable disabled={saving} style={[styles.saveButton, saving && styles.disabled]} onPress={save}>{saving ? <ActivityIndicator color="white" /> : <><Text style={styles.saveButtonText}>Save inspection offline</Text><Text style={styles.saveButtonText}>→</Text></>}</Pressable>
   </ScrollView></KeyboardAvoidingView>;
