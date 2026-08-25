@@ -106,7 +106,7 @@ python -m uvicorn app.main:app --app-dir services/ai --reload --port 8000
 npm run dev:mobile
 ```
 
-For a physical Android phone, the checked-in default uses the public production API at `https://swoop.video`. For local-only development, copy `.env.example` to `.env` and override `EXPO_PUBLIC_API_URL` with your computer's LAN address over trusted Wi-Fi. Android emulators can use `http://10.0.2.2:4000`.
+For a physical Android phone, the checked-in default uses the public production API at `https://swoop.video/corvus`. For local-only development, copy `.env.example` to `.env` and override `EXPO_PUBLIC_API_URL` with your computer's LAN address over trusted Wi-Fi. Android emulators can use `http://10.0.2.2:4000`.
 
 ## Verify everything
 
@@ -120,7 +120,7 @@ See the dated [verification record](docs/VERIFICATION.md) for build, runtime smo
 
 ## Production deployment
 
-The live portfolio is served at [swoop.video](https://swoop.video). Docker Compose runs the web app, Node API, Python service, and PostgreSQL on the VPS. The VPS binds application ports only to localhost. A Cloudflare Worker terminates the public request path and forwards it to a token-protected Caddy origin, so the raw server address cannot bypass the proxy.
+The live portfolio is served at [swoop.video/corvus](https://swoop.video/corvus). The existing Swoop product remains at the domain root. Docker Compose runs the web app, Node API, Python service, and PostgreSQL on the VPS. The VPS binds application ports only to localhost. A path-scoped Cloudflare Worker forwards only `/corvus*` to a token-protected Caddy origin, so the raw server address cannot bypass the proxy.
 
 ```bash
 cp .env.example .env
@@ -129,7 +129,7 @@ docker compose up -d --build
 docker compose ps
 ```
 
-Caddy routes the web app at `/`, GraphQL at `/graphql`, mobile endpoints at `/api/mobile/*`, and the extraction service at `/document-ai/*`. GitHub Actions verifies every push; the deployment workflow updates the VPS only after verification succeeds.
+Under the public `/corvus` prefix, Caddy routes the web app, GraphQL at `/corvus/graphql`, mobile endpoints at `/corvus/api/mobile/*`, and the extraction service at `/corvus/document-ai/*`. GitHub Actions verifies every push; the deployment workflow updates the VPS only after verification succeeds.
 
 The production API uses Prisma migrations and PostgreSQL persistence seeded exclusively with deterministic synthetic data. Authentication, object storage, backups, monitoring, and client data-residency controls remain explicit prerequisites before this demonstration could hold real client information. See the [VPS runbook](docs/VPS-RUNBOOK.md).
 

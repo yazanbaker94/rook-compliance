@@ -2,7 +2,7 @@ import * as Network from 'expo-network';
 import { markSubmissionsSynced } from './storage';
 import type { QueuedSubmission } from './types';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://swoop.video';
+const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://swoop.video/corvus';
 
 export async function syncQueuedSubmissions(submissions: QueuedSubmission[]) {
   const queued = submissions.filter((submission) => submission.syncState === 'QUEUED');

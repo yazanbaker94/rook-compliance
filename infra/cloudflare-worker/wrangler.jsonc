@@ -6,7 +6,7 @@
   "workers_dev": false,
   "routes": [
     {
-      "pattern": "swoop.video/*",
+      "pattern": "swoop.video/corvus*",
       "zone_name": "swoop.video"
     }
   ]

@@ -50,9 +50,9 @@ services:
     build:
       context: ./apps/web
       args:
-        NEXT_PUBLIC_API_URL: https://swoop.video
+        NEXT_PUBLIC_API_URL: https://swoop.video/corvus
     environment:
-      NEXT_PUBLIC_API_URL: https://swoop.video
+      NEXT_PUBLIC_API_URL: https://swoop.video/corvus
     ports:
       - "127.0.0.1:3100:3000"
     depends_on:

@@ -7,7 +7,7 @@ FROM dependencies AS build
 COPY . .
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
-RUN npm run build
+RUN npm run build && cp -R dist/client/corvus/_next dist/client/_next
 
 FROM node:22-alpine AS runtime
 WORKDIR /app

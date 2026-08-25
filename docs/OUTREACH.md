@@ -4,7 +4,7 @@ Hi [name] — thank you for keeping me on the list. I took the ambiguity in the 
 
 The demo uses synthetic data and keeps every AI proposal behind a human approval gate. It includes Next.js/TypeScript, Node/GraphQL, Prisma, Python document extraction, Expo Android, tests, CI, and a Docker/VPS deployment path.
 
-- Live demo: https://swoop.video
+- Live demo: https://swoop.video/corvus
 - Repository: https://github.com/yazanbaker94/rook-compliance
 - Four-minute walkthrough: https://github.com/yazanbaker94/rook-compliance/blob/main/docs/DEMO-SCRIPT.md
 

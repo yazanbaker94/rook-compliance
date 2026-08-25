@@ -15,7 +15,7 @@ Verified on August 25, 2026:
 - Docker images for the web app, Node API, Python service, and PostgreSQL were built and started on the target Ubuntu VPS.
 - Prisma's initial migration ran against PostgreSQL; the persistent production adapter seeded three synthetic facilities.
 - Container health checks passed for PostgreSQL, the API, and document intelligence; the web container returned HTTP 200.
-- Cloudflare Worker routing passed live checks at `https://swoop.video` for the dashboard, health endpoint, GraphQL, Android bootstrap, and document-service health.
+- Cloudflare Worker routing passed live checks at `https://swoop.video/corvus` for the dashboard, health endpoint, GraphQL, Android bootstrap, and document-service health; the existing Swoop website remained at the domain root.
 - The raw VPS origin rejected requests without the private origin token.
 - A real browser session loaded the dashboard and reported `API connected`.
 - The existing VPS-hosted site returned HTTP 200 after both Caddy configuration reloads.

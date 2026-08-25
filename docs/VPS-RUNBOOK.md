@@ -3,7 +3,7 @@
 ## Before deployment
 
 - Isolate the application in its own Docker Compose project and bind its ports to localhost.
-- Route `swoop.video` through the checked-in Cloudflare Worker.
+- Route only `swoop.video/corvus*` through the checked-in Cloudflare Worker; leave the domain root untouched.
 - Allow inbound TCP 80 and 443; restrict SSH by key and firewall policy.
 - Install current Docker Engine and the Compose plugin.
 - Copy the repository without any resumes, private documents, or real client data.
@@ -32,7 +32,7 @@ Store the HTTPS origin hostname as `ORIGIN_HOST` and the matching token as `ORIG
 docker compose up -d --build
 docker compose ps
 docker compose logs --tail=100 web api document-ai postgres
-curl -fsS https://swoop.video/health
+curl -fsS https://swoop.video/corvus/health
 ```
 
 ## Update
