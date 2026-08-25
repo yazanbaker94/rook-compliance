@@ -24,9 +24,9 @@ const DOCUMENT_AI_URL = process.env.NEXT_PUBLIC_DOCUMENT_AI_URL ?? `${API_URL}/d
 const ASSET_PREFIX = process.env.NODE_ENV === 'production' ? '/corvus' : '';
 const brandAssets = {
   mark: `${ASSET_PREFIX}/brand/rook-mark.webp`,
-  terrain: `url("${ASSET_PREFIX}/brand/terrain-texture.webp")`,
-  industrial: `url("${ASSET_PREFIX}/brand/industrial-silhouette.webp")`,
-  paper: `url("${ASSET_PREFIX}/brand/paper-texture.png")`,
+  terrain: `url("${ASSET_PREFIX}/brand/terrain-texture.png")`,
+  industrial: `url("${ASSET_PREFIX}/brand/industrial-silhouette.png")`,
+  paper: `url("${ASSET_PREFIX}/brand/paper-texture-v2.png")`,
 };
 const evidencePhotos = [
   { src: `${ASSET_PREFIX}/evidence/mw03-context.webp`, title: 'Site context', alt: 'Monitoring well MW-03 with a field worker at the synthetic Red Willow Terminal.' },
