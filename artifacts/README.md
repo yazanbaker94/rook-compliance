@@ -1,11 +1,15 @@
 # Android artifact
 
-`rook-field-arm64-debug.apk` is an installable Android debug build for modern arm64 phones.
+`rook-field-v0.1.0-arm64.apk` is a standalone Android release build for modern arm64 phones. It embeds the production JavaScript bundle and uses `https://swoop.video/corvus` as its API, so Metro and Expo Go are not required.
 
-- SHA-256: `C164DC32D15BE9BC5F258E84DBACDD5863C3C91E8C0CDAAEB64D704A0BCCD7DD`
+- Download: [GitHub release v0.1.0](https://github.com/yazanbaker94/rook-compliance/releases/tag/v0.1.0)
+- SHA-256: `9221160F23735175730A01376CCC0941FC8304B84B4C635D85130FDDA9BB3D8C`
 - Package: `ca.rookcompliance.field`
-- Size: approximately 47.4 MiB
+- Version: `1.0.0` (`versionCode` 1)
+- Architecture: `arm64-v8a`
+- Size: 27.7 MiB
+- Minimum Android: API 24 (Android 7.0)
 
-Because it is a debug build, start Metro with `npm run dev:mobile` while demonstrating it. The JavaScript production bundle and native arm64 debug build were both verified independently.
+The APK signature was verified with Android Build Tools. The packaged manifest requests camera and location access for field evidence and contains no microphone permission.
 
-For a shareable standalone APK, run `eas build --platform android --profile preview`. The included `eas.json` requests an internal APK. Set `EXPO_PUBLIC_API_URL` to the HTTPS VPS endpoint before that build.
+The checked-in `eas.json` also provides an internal APK profile for managed Expo builds.
