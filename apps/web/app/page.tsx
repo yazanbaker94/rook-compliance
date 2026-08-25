@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import Image from 'next/image';
 
 type View = 'overview' | 'facilities' | 'obligations' | 'documents' | 'field';
@@ -21,6 +21,12 @@ type WorkspaceData = { dashboard: Dashboard; facilities: Facility[]; obligations
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 const DOCUMENT_AI_URL = process.env.NEXT_PUBLIC_DOCUMENT_AI_URL ?? `${API_URL}/document-ai`;
 const ASSET_PREFIX = process.env.NODE_ENV === 'production' ? '/corvus' : '';
+const brandAssets = {
+  mark: `${ASSET_PREFIX}/brand/rook-mark.webp`,
+  terrain: `url("${ASSET_PREFIX}/brand/terrain-texture.webp")`,
+  industrial: `url("${ASSET_PREFIX}/brand/industrial-silhouette.webp")`,
+  paper: `url("${ASSET_PREFIX}/brand/paper-texture.webp")`,
+};
 const evidencePhotos = [
   { src: `${ASSET_PREFIX}/evidence/mw03-context.webp`, title: 'Site context', alt: 'Monitoring well MW-03 with a field worker at the synthetic Red Willow Terminal.' },
   { src: `${ASSET_PREFIX}/evidence/mw03-label.webp`, title: 'Well identification', alt: 'Close-up of the weathered MW-03 identification label.' },
@@ -28,6 +34,7 @@ const evidencePhotos = [
 ];
 const views: View[] = ['overview', 'facilities', 'obligations', 'documents', 'field'];
 const viewLabels: Record<View, string> = { overview: 'Overview', facilities: 'Facilities', obligations: 'Obligations', documents: 'Approvals & permits', field: 'Field evidence' };
+const viewIcons: Record<View, string> = { overview: '▦', facilities: '⌂', obligations: '▣', documents: '◇', field: '▤' };
 const viewMeta: Record<View, { eyebrow: string; title: string; description: string }> = {
   overview: { eyebrow: 'Compliance operations', title: 'Good morning, Yazan.', description: 'Here is what needs your attention today.' },
   facilities: { eyebrow: 'Portfolio health', title: 'Facilities', description: 'Explainable readiness across the demonstration portfolio.' },
@@ -90,10 +97,16 @@ export default function Home() {
   function notify(message: string) { setToast(message); window.setTimeout(() => setToast(''), 3200); }
   function requestImport() { navigate('documents'); setImportRequest(value => value + 1); }
 
-  return <main className="app-shell">
+  const shellTextures = {
+    '--paper-texture': brandAssets.paper,
+    '--terrain-texture': brandAssets.terrain,
+    '--industrial-silhouette': brandAssets.industrial,
+  } as CSSProperties;
+
+  return <main className="app-shell" style={shellTextures}>
     <aside className="sidebar">
-      <button type="button" className="brand" onClick={() => navigate('overview')}><span className="brand-mark">R</span><span>Rook</span></button>
-      <nav aria-label="Primary navigation">{views.map((item, index) => <button type="button" aria-current={view === item ? 'page' : undefined} className={`nav-item ${view === item ? 'active' : ''}`} onClick={() => navigate(item)} key={item}><span>0{index + 1}</span>{viewLabels[item]}</button>)}</nav>
+      <button type="button" className="brand" onClick={() => navigate('overview')}><span className="brand-mark"><Image src={brandAssets.mark} alt="" width={48} height={48} priority unoptimized /></span><span>Rook</span></button>
+      <nav aria-label="Primary navigation">{views.map((item, index) => <button type="button" aria-current={view === item ? 'page' : undefined} className={`nav-item ${view === item ? 'active' : ''}`} onClick={() => navigate(item)} key={item}><span className="nav-icon" aria-hidden="true">{viewIcons[item]}</span><span className="nav-label">{viewLabels[item]}</span><span className="nav-index">0{index + 1}</span></button>)}</nav>
       <div className="sidebar-footer"><div className="user-card"><span className="avatar small">YB</span><div><strong>Yazan Baker</strong><small>Consultant</small></div></div><div className="sidebar-note"><span>Demo workspace</span><strong>Public & synthetic data only</strong></div></div>
     </aside>
     <section className="workspace">
@@ -134,7 +147,7 @@ function ObligationLine({ item }: { item: Obligation }) { return <article classN
 function FacilitiesView({ data, navigate }: { data: WorkspaceData; navigate: (view: View) => void }) {
   return <section className="panel facilities-page"><PanelHeading title={`${data.facilities.length} operating sites`} action="Open obligation register" onAction={() => navigate('obligations')} /><div className="facility-cards">{data.facilities.map(facility => {
     const facilityObligations = data.obligations.filter(item => item.facilityId === facility.id); const open = facilityObligations.filter(item => item.status !== 'COMPLETE').length; const high = facilityObligations.filter(item => item.risk === 'HIGH' && item.status !== 'COMPLETE').length;
-    const health = high ? 'high' : facility.readiness < 85 ? 'medium' : 'low'; const healthLabel = high ? 'Needs attention' : facility.readiness < 85 ? 'Watch' : 'On track'; const explanation = high ? `${high} high-risk requirement${high === 1 ? '' : 's'} need action.` : open ? `${open} active requirement${open === 1 ? '' : 's'} remain; none are high risk.` : 'No active obligations are waiting on this facility.';
+    const health = high ? 'high' : facility.readiness < 85 ? 'medium' : 'low'; const healthLabel = high ? 'Needs attention' : facility.readiness < 85 ? 'Watch' : 'On track'; const explanation = high ? `${high} high-risk requirement${high === 1 ? '' : 's'} ${high === 1 ? 'needs' : 'need'} action.` : open ? `${open} active requirement${open === 1 ? '' : 's'} ${open === 1 ? 'remains' : 'remain'}; none are high risk.` : 'No active obligations are waiting on this facility.';
     return <article className="facility-card" key={facility.id}><div className="facility-card-top"><span className="facility-icon">{initials(facility.name)}</span><span className={`risk-pill ${health}`}>{healthLabel}</span></div><h2>{facility.name}</h2><p>{facility.client} · {facility.location}</p><div className="facility-score"><strong>{facility.readiness}%</strong><div className="progress"><span style={{ width: `${facility.readiness}%` }} /></div></div><dl><div><dt>Open obligations</dt><dd>{open}</dd></div><div><dt>High risk</dt><dd>{high}</dd></div></dl><div className="insight"><strong>Why this score</strong><span>{explanation}</span></div></article>;
   })}</div></section>;
 }
