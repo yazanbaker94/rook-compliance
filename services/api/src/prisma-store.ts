@@ -60,7 +60,13 @@ export class PrismaRookStore {
     for (const submission of submissions) {
       await prisma.fieldSubmission.upsert({
         where: { id: submission.id },
-        update: {},
+        update: {
+          inspector: submission.inspector,
+          completedAt: new Date(submission.completedAt),
+          notes: submission.notes,
+          reading: submission.reading,
+          photoCount: submission.photoCount,
+        },
         create: {
           id: submission.id,
           obligationId: submission.obligationId,
