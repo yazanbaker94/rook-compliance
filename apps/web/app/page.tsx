@@ -18,7 +18,8 @@ type AuditEvent = { id: string; actorId: string; action: string; entityType: str
 type Dashboard = { openObligations: number; attentionRequired: number; averageReadiness: number; pendingReviews: number; fieldSubmissions: number };
 type WorkspaceData = { dashboard: Dashboard; facilities: Facility[]; obligations: Obligation[]; proposals: Proposal[]; submissions: Submission[]; documents: DocumentRecord[]; auditEvents: AuditEvent[] };
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+const DEFAULT_API_URL = process.env.NODE_ENV === 'production' ? 'https://swoop.video/corvus' : 'http://localhost:4000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? DEFAULT_API_URL;
 const DOCUMENT_AI_URL = process.env.NEXT_PUBLIC_DOCUMENT_AI_URL ?? `${API_URL}/document-ai`;
 const ASSET_PREFIX = process.env.NODE_ENV === 'production' ? '/corvus' : '';
 const brandAssets = {
