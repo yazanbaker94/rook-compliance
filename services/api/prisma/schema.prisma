@@ -26,6 +26,12 @@ enum ReviewStatus {
   REJECTED
 }
 
+enum SubmissionReviewStatus {
+  PENDING
+  APPROVED
+  CORRECTION_REQUESTED
+}
+
 model Client {
   id String @id @default(cuid())
   name String
@@ -101,6 +107,9 @@ model FieldSubmission {
   reading String
   photoCount Int @default(0)
   deviceId String?
+  reviewStatus SubmissionReviewStatus @default(PENDING)
+  reviewNote String @default("")
+  reviewedAt DateTime?
   createdAt DateTime @default(now())
   @@index([obligationId])
 }

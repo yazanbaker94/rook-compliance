@@ -1,6 +1,7 @@
 export type Risk = 'LOW' | 'MEDIUM' | 'HIGH';
 export type ObligationStatus = 'OPEN' | 'IN_PROGRESS' | 'AWAITING_REVIEW' | 'COMPLETE';
 export type ReviewStatus = 'PROPOSED' | 'ACCEPTED' | 'REJECTED';
+export type SubmissionReviewStatus = 'PENDING' | 'APPROVED' | 'CORRECTION_REQUESTED';
 
 export interface Facility {
   id: string;
@@ -44,6 +45,45 @@ export interface FieldSubmission {
   reading: string;
   photoCount: number;
   syncState: 'QUEUED' | 'SYNCED';
+  reviewStatus: SubmissionReviewStatus;
+  reviewNote: string;
+  reviewedAt: string | null;
+}
+
+export interface DocumentRecord {
+  id: string;
+  facilityId: string;
+  name: string;
+  createdAt: string;
+}
+
+export interface AuditEventRecord {
+  id: string;
+  actorId: string;
+  action: string;
+  entityType: string;
+  entityId: string;
+  detail: string;
+  createdAt: string;
+}
+
+export interface CreateObligationInput {
+  facilityId: string;
+  title: string;
+  dueDate: string;
+  frequency: string;
+  risk: Risk;
+  assignedTo: string;
+  evidenceRequired: string;
+}
+
+export interface ImportedProposalInput {
+  title: string;
+  requirement: string;
+  frequency: string;
+  sourcePage: number;
+  sourceText: string;
+  confidence: number;
 }
 
 export interface MobileChange {

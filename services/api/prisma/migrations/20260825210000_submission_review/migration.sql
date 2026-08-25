@@ -1,0 +1,6 @@
+CREATE TYPE "SubmissionReviewStatus" AS ENUM ('PENDING', 'APPROVED', 'CORRECTION_REQUESTED');
+
+ALTER TABLE "FieldSubmission"
+ADD COLUMN "reviewStatus" "SubmissionReviewStatus" NOT NULL DEFAULT 'PENDING',
+ADD COLUMN "reviewNote" TEXT NOT NULL DEFAULT '',
+ADD COLUMN "reviewedAt" TIMESTAMP(3);

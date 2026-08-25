@@ -1,10 +1,20 @@
+import os
 from io import BytesIO
+
 from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from pypdf import PdfReader
 from .extractor import extract_obligations
 
 app = FastAPI(title="Rook Document Intelligence", version="0.1.0")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=os.getenv("CORS_ORIGINS", "http://localhost:3000").split(","),
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["*"],
+)
 
 class ExtractionRequest(BaseModel):
     document_name: str = Field(min_length=3, max_length=180)

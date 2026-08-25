@@ -53,9 +53,19 @@ def extract_obligations(text: str):
     proposals = []
     obligation_terms = re.compile(r"\b(shall|must|required to|no later than)\b", re.IGNORECASE)
     for page, section in _page_sections(text):
-        sentences = re.split(r"(?<=[.!?])\s+|\n+", section)
+        sentences = re.split(r"(?<=[.!?])\s+", section)
         for sentence in sentences:
-            clean = " ".join(sentence.split())
+            lines = [line.strip() for line in sentence.splitlines() if line.strip()]
+            first_obligation_line = next((index for index, line in enumerate(lines) if obligation_terms.search(line)), -1)
+            if first_obligation_line < 0:
+                continue
+            start = first_obligation_line
+            match = obligation_terms.search(lines[first_obligation_line])
+            if match and not lines[first_obligation_line][:match.start()].strip() and first_obligation_line > 0:
+                previous = lines[first_obligation_line - 1]
+                if len(previous.split()) >= 4 and not previous.isupper() and not re.match(r"^\d+(?:\.\d+)?\b", previous):
+                    start -= 1
+            clean = " ".join(" ".join(lines[start:]).split())
             if len(clean) < 25 or not obligation_terms.search(clean):
                 continue
             proposals.append(ProposedObligation(

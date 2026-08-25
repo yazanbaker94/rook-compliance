@@ -20,5 +20,5 @@ export const proposals: Proposal[] = [
 ];
 
 export const submissions: FieldSubmission[] = [
-  { id: 'sub-groundwater-01', obligationId: 'obl-groundwater-01', inspector: 'Jordan Lee', completedAt: '2026-08-24T17:42:00.000Z', notes: 'All wells accessible. MW-03 label is faded and should be replaced.', reading: 'pH 7.4', photoCount: 3, syncState: 'SYNCED' },
+  { id: 'sub-groundwater-01', obligationId: 'obl-groundwater-01', inspector: 'Jordan Lee', completedAt: '2026-08-24T17:42:00.000Z', notes: 'All wells accessible. MW-03 label is faded and should be replaced. · GPS: 52.26800, -113.81100 · Checklist complete', reading: 'pH 7.4 · 12.6 °C', photoCount: 3, syncState: 'SYNCED', reviewStatus: 'PENDING', reviewNote: '', reviewedAt: null },
 ];

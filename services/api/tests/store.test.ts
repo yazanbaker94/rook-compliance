@@ -25,4 +25,32 @@ describe('RookStore', () => {
   it('reports dashboard totals from current state', () => {
     expect(store.dashboard()).toMatchObject({ openObligations: 4, attentionRequired: 1, averageReadiness: 89, pendingReviews: 3 });
   });
+
+  it('creates a complete obligation record and records an audit event', () => {
+    const created = store.createObligation({ facilityId: 'fac-clearwater', title: 'Inspect containment berm', dueDate: '2026-09-15', frequency: 'Quarterly', risk: 'MEDIUM', assignedTo: 'Avery Chen', evidenceRequired: 'Checklist and two photos' });
+    expect(created).toMatchObject({ status: 'OPEN', facilityId: 'fac-clearwater' });
+    expect(store.listAuditEvents('Obligation', created.id)[0]?.action).toBe('OBLIGATION_CREATED');
+  });
+
+  it('persists proposal edits before accepting them', () => {
+    store.updateProposal('prop-02', { title: 'Archive laboratory certificates', requirement: 'Keep certificates for five years.', frequency: 'For each sample' });
+    store.reviewProposal('prop-02', 'ACCEPTED');
+    expect(store.obligations.find(item => item.id === 'obl-prop-02')).toMatchObject({ title: 'Archive laboratory certificates', evidenceRequired: 'Keep certificates for five years.' });
+  });
+
+  it('reviews field evidence and advances its obligation', () => {
+    const reviewed = store.reviewSubmission('sub-groundwater-01', 'APPROVED', 'Complete and traceable.');
+    expect(reviewed).toMatchObject({ reviewStatus: 'APPROVED', reviewNote: 'Complete and traceable.' });
+    expect(store.obligations.find(item => item.id === 'obl-groundwater-01')?.status).toBe('COMPLETE');
+  });
+
+  it('keeps an imported proposal attached to the selected facility when accepted', () => {
+    const document = store.importDocument('fac-clearwater', 'Clearwater_Approval.pdf', [{
+      title: 'Inspect compressor drainage', requirement: 'Inspect and record drainage conditions.', frequency: 'Monthly',
+      sourcePage: 9, sourceText: 'The approval holder shall inspect compressor drainage monthly.', confidence: 0.95,
+    }]);
+    const proposal = store.proposals.find(item => item.documentId === document.id)!;
+    store.reviewProposal(proposal.id, 'ACCEPTED');
+    expect(store.obligations.find(item => item.id === `obl-${proposal.id}`)?.facilityId).toBe('fac-clearwater');
+  });
 });

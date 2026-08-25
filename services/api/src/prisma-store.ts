@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { facilities, obligations, proposals, submissions } from './seed.js';
-import type { MobileChange, Obligation, Proposal } from './types.js';
+import type { CreateObligationInput, ImportedProposalInput, MobileChange, Obligation, ObligationStatus, Proposal, SubmissionReviewStatus } from './types.js';
 
 const prisma = new PrismaClient();
 
@@ -118,12 +118,29 @@ export class PrismaRookStore {
       reading: item.reading,
       photoCount: item.photoCount,
       syncState: 'SYNCED' as const,
+      reviewStatus: item.reviewStatus as SubmissionReviewStatus,
+      reviewNote: item.reviewNote,
+      reviewedAt: item.reviewedAt?.toISOString() ?? null,
     }));
+  }
+
+  async listDocuments() {
+    const rows = await prisma.document.findMany({ orderBy: { createdAt: 'desc' } });
+    return rows.map(item => ({ id: item.id, facilityId: item.facilityId, name: item.name, createdAt: item.createdAt.toISOString() }));
+  }
+
+  async listAuditEvents(entityType?: string, entityId?: string) {
+    const rows = await prisma.auditEvent.findMany({
+      where: { ...(entityType ? { entityType } : {}), ...(entityId ? { entityId } : {}) },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
+    return rows.map(item => ({ ...item, detail: JSON.stringify(item.metadata), createdAt: item.createdAt.toISOString() }));
   }
 
   async reviewProposal(id: string, status: 'ACCEPTED' | 'REJECTED') {
     return prisma.$transaction(async tx => {
-      const proposal = await tx.proposal.findUnique({ where: { id } });
+      const proposal = await tx.proposal.findUnique({ where: { id }, include: { document: { select: { facilityId: true } } } });
       if (!proposal) throw new Error(`Proposal ${id} was not found`);
       const reviewed = await tx.proposal.update({ where: { id }, data: { status, reviewedAt: new Date() } });
       if (status === 'ACCEPTED') {
@@ -132,7 +149,7 @@ export class PrismaRookStore {
           update: {},
           create: {
             id: `obl-${proposal.id}`,
-            facilityId: 'fac-north-ridge',
+            facilityId: proposal.document.facilityId,
             title: proposal.title,
             dueDate: new Date('2026-09-30'),
             frequency: proposal.frequency,
@@ -142,9 +159,64 @@ export class PrismaRookStore {
             evidenceRequired: proposal.requirement,
           },
         });
+      } else {
+        await tx.obligation.deleteMany({ where: { id: `obl-${proposal.id}` } });
       }
       await tx.auditEvent.create({ data: { actorId: 'demo-consultant', action: `PROPOSAL_${status}`, entityType: 'Proposal', entityId: id, metadata: { sourcePage: proposal.sourcePage } } });
       return { ...reviewed, status: reviewed.status as Proposal['status'] };
+    });
+  }
+
+  async updateProposal(id: string, input: { title: string; requirement: string; frequency: string }) {
+    return prisma.$transaction(async tx => {
+      const proposal = await tx.proposal.update({ where: { id }, data: input });
+      await tx.auditEvent.create({ data: { actorId: 'demo-consultant', action: 'PROPOSAL_EDITED', entityType: 'Proposal', entityId: id, metadata: input } });
+      return { ...proposal, status: proposal.status as Proposal['status'] };
+    });
+  }
+
+  async importDocument(facilityId: string, name: string, proposals: ImportedProposalInput[]) {
+    return prisma.$transaction(async tx => {
+      const document = await tx.document.create({
+        data: {
+          facilityId,
+          name,
+          storageKey: `demo/${Date.now()}-${name.replace(/[^a-z0-9.-]+/gi, '-').toLowerCase()}`,
+          proposals: { create: proposals.map(item => ({ ...item, status: 'PROPOSED' })) },
+        },
+      });
+      await tx.auditEvent.create({ data: { actorId: 'demo-consultant', action: 'DOCUMENT_IMPORTED', entityType: 'Document', entityId: document.id, metadata: { name, proposalCount: proposals.length } } });
+      return { id: document.id, facilityId: document.facilityId, name: document.name, createdAt: document.createdAt.toISOString() };
+    });
+  }
+
+  async createObligation(input: CreateObligationInput) {
+    return prisma.$transaction(async tx => {
+      const obligation = await tx.obligation.create({ data: { ...input, dueDate: new Date(input.dueDate), status: 'OPEN' } });
+      await tx.auditEvent.create({ data: { actorId: 'demo-consultant', action: 'OBLIGATION_CREATED', entityType: 'Obligation', entityId: obligation.id, metadata: { title: obligation.title } } });
+      return mapObligation(obligation);
+    });
+  }
+
+  async updateObligationStatus(id: string, status: ObligationStatus) {
+    return prisma.$transaction(async tx => {
+      const obligation = await tx.obligation.update({ where: { id }, data: { status } });
+      await tx.auditEvent.create({ data: { actorId: 'demo-consultant', action: 'OBLIGATION_STATUS_CHANGED', entityType: 'Obligation', entityId: id, metadata: { status } } });
+      return mapObligation(obligation);
+    });
+  }
+
+  async reviewSubmission(id: string, status: SubmissionReviewStatus, note: string) {
+    return prisma.$transaction(async tx => {
+      const submission = await tx.fieldSubmission.update({ where: { id }, data: { reviewStatus: status, reviewNote: note, reviewedAt: new Date() } });
+      await tx.obligation.update({ where: { id: submission.obligationId }, data: { status: status === 'APPROVED' ? 'COMPLETE' : 'IN_PROGRESS' } });
+      await tx.auditEvent.create({ data: { actorId: 'demo-consultant', action: `FIELD_${status}`, entityType: 'FieldSubmission', entityId: id, metadata: { note } } });
+      return {
+        id: submission.id, obligationId: submission.obligationId, inspector: submission.inspector,
+        completedAt: submission.completedAt.toISOString(), notes: submission.notes, reading: submission.reading,
+        photoCount: submission.photoCount, syncState: 'SYNCED' as const, reviewStatus: submission.reviewStatus as SubmissionReviewStatus,
+        reviewNote: submission.reviewNote, reviewedAt: submission.reviewedAt?.toISOString() ?? null,
+      };
     });
   }
 

@@ -8,15 +8,15 @@ Mention that every record is synthetic and that AI output cannot become a compli
 
 ## 0:30 — Show portfolio awareness
 
-Open the web overview. Point to readiness, open work, evidence coverage, and North Ridge’s explainable attention state. Open Facilities to show the chart.
+Open the web overview. Point to readiness, open work, pending evidence, and North Ridge’s explainable attention state. Open Facilities to show the site-level readiness cards.
 
 Say: “The score is a navigation aid, not an unexplained AI verdict.”
 
 ## 1:05 — Review an approval
 
-Choose **Import approval**, then show the page citation, extracted frequency, confidence, and original sentence. Reject one proposal, accept another, and change one decision.
+Choose **Import approval** and upload `output/pdf/corvus-synthetic-operating-approval.pdf`. Show that three clauses were found on physical pages 14, 18, and 22. Edit the operational wording, then accept one proposal.
 
-Open **Obligations**. The accepted item is represented in the workflow. Drag a card from Upcoming to In field.
+Open **Obligations**. Search for the accepted item, open its source-linked detail, and move it from Open to In progress.
 
 Say: “Automation saves reading and transcription time, while the consultant retains authorship and accountability.”
 
@@ -30,7 +30,7 @@ Say: “Sync is idempotent, so repeated retries cannot duplicate the inspection.
 
 ## 3:10 — Close the loop
 
-Return to **Field work** in the web console. Review the reading, evidence count, location, capture time, sync time, and field note; then approve it.
+Return to **Field evidence** in the web console. Review the reading, evidence count, location, capture time, sync timeline, and field note. Demonstrate a correction note, then approve the evidence and show the completed obligation plus review history.
 
 ## 3:40 — Show engineering ownership
 

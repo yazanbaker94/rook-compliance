@@ -58,13 +58,14 @@ flowchart LR
 
 The web demo includes:
 
-- portfolio readiness metrics and explainable facility scores;
-- Recharts facility visualization;
-- a dnd-kit obligation workflow board;
-- approval proposals with page citations, confidence, accept/reject/change-decision states;
-- accepted proposals appearing back in the register;
-- a field-submission review screen; and
-- live API connectivity detection with a graceful demo fallback.
+- live portfolio metrics and explainable facility readiness;
+- a searchable, filterable obligation register with source-linked detail;
+- creation and status updates that persist through GraphQL;
+- real PDF upload and draft extraction with physical page citations;
+- editable approval proposals with confidence, accept, and reject decisions;
+- accepted proposals appearing immediately in the obligation register;
+- field-evidence correction and approval workflows with reviewer notes and audit history; and
+- URL-safe navigation with live API connectivity status.
 
 The Android app includes:
 
@@ -79,12 +80,14 @@ The Android app includes:
 
 The services include:
 
-- GraphQL facilities, obligations, proposals, dashboard, submissions, review mutations, and sync mutation;
+- GraphQL facilities, obligations, documents, proposals, dashboard, submissions, audit events, review mutations, and sync mutation;
 - lightweight REST endpoints for health, mobile bootstrap, and mobile sync;
 - a Prisma/PostgreSQL production data model;
 - PDF and text extraction with page-level source evidence;
 - validation at every external input boundary; and
-- tests for proposal decisions, idempotent sync, and extraction.
+- tests for proposal decisions, idempotent sync, evidence review, audit events, and PDF extraction.
+
+For a safe end-to-end import demonstration, upload [`output/pdf/corvus-synthetic-operating-approval.pdf`](output/pdf/corvus-synthetic-operating-approval.pdf). Its 22 fictional pages yield three traceable proposals on pages 14, 18, and 22.
 
 ## Run locally
 
