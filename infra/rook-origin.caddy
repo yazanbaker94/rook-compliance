@@ -1,0 +1,29 @@
+http://{$ROOK_ORIGIN_HOST} {
+	@rook_authorized header X-Rook-Origin-Token {$ROOK_ORIGIN_TOKEN}
+
+	handle @rook_authorized {
+		encode zstd gzip
+
+		handle /health {
+			reverse_proxy 127.0.0.1:4100
+		}
+
+		handle /graphql* {
+			reverse_proxy 127.0.0.1:4100
+		}
+
+		handle /api/mobile/* {
+			reverse_proxy 127.0.0.1:4100
+		}
+
+		handle_path /document-ai/* {
+			reverse_proxy 127.0.0.1:8100
+		}
+
+		handle {
+			reverse_proxy 127.0.0.1:3100
+		}
+	}
+
+	respond 403
+}

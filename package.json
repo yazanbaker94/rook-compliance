@@ -1,0 +1,15 @@
+{
+  "name": "rook-compliance",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev:web": "npm --prefix apps/web run dev",
+    "dev:api": "npm --prefix services/api run dev",
+    "dev:mobile": "npm --prefix apps/mobile start",
+    "test:api": "npm --prefix services/api test",
+    "test:ai": "python -m pytest -q",
+    "verify:web": "npm --prefix apps/web run build",
+    "verify:mobile": "npm --prefix apps/mobile run typecheck",
+    "verify": "npm run verify:web && npm run test:api && npm run verify:mobile && npm run test:ai"
+  }
+}

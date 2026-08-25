@@ -1,0 +1,117 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Risk {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum ObligationStatus {
+  OPEN
+  IN_PROGRESS
+  AWAITING_REVIEW
+  COMPLETE
+}
+
+enum ReviewStatus {
+  PROPOSED
+  ACCEPTED
+  REJECTED
+}
+
+model Client {
+  id String @id @default(cuid())
+  name String
+  facilities Facility[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Facility {
+  id String @id @default(cuid())
+  clientId String
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  name String
+  location String
+  readiness Int @default(0)
+  risk Risk @default(LOW)
+  obligations Obligation[]
+  documents Document[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([clientId])
+}
+
+model Document {
+  id String @id @default(cuid())
+  facilityId String
+  facility Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  name String
+  storageKey String
+  proposals Proposal[]
+  createdAt DateTime @default(now())
+}
+
+model Proposal {
+  id String @id @default(cuid())
+  documentId String
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  title String
+  requirement String
+  frequency String
+  sourcePage Int
+  sourceText String
+  confidence Float
+  status ReviewStatus @default(PROPOSED)
+  createdAt DateTime @default(now())
+  reviewedAt DateTime?
+}
+
+model Obligation {
+  id String @id @default(cuid())
+  facilityId String
+  facility Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  title String
+  dueDate DateTime
+  frequency String
+  status ObligationStatus @default(OPEN)
+  risk Risk @default(LOW)
+  assignedTo String?
+  evidenceRequired String
+  submissions FieldSubmission[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([facilityId, dueDate])
+}
+
+model FieldSubmission {
+  id String @id
+  obligationId String
+  obligation Obligation @relation(fields: [obligationId], references: [id], onDelete: Cascade)
+  inspector String
+  completedAt DateTime
+  notes String
+  reading String
+  photoCount Int @default(0)
+  deviceId String?
+  createdAt DateTime @default(now())
+  @@index([obligationId])
+}
+
+model AuditEvent {
+  id String @id @default(cuid())
+  actorId String
+  action String
+  entityType String
+  entityId String
+  metadata Json
+  createdAt DateTime @default(now())
+  @@index([entityType, entityId])
+}

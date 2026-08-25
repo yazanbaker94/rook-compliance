@@ -1,0 +1,23 @@
+{$ROOK_DOMAIN:localhost} {
+  encode zstd gzip
+
+  handle /health {
+    reverse_proxy api:4000
+  }
+
+  handle /graphql* {
+    reverse_proxy api:4000
+  }
+
+  handle /api/mobile/* {
+    reverse_proxy api:4000
+  }
+
+  handle_path /document-ai/* {
+    reverse_proxy document-ai:8000
+  }
+
+  handle {
+    reverse_proxy web:3000
+  }
+}
