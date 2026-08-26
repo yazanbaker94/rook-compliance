@@ -38,6 +38,16 @@ export async function initializeDatabase() {
       checklist_complete INTEGER NOT NULL,
       sync_state TEXT NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS correction_assignments (
+      id TEXT PRIMARY KEY NOT NULL,
+      facility TEXT NOT NULL,
+      title TEXT NOT NULL,
+      due_label TEXT NOT NULL,
+      evidence_required TEXT NOT NULL,
+      risk TEXT NOT NULL,
+      correction_note TEXT NOT NULL,
+      correction_reviewed_at TEXT
+    );
   `);
   for (const item of assignments) {
     await connection.runAsync(
@@ -57,6 +67,45 @@ export async function listAssignments(): Promise<Assignment[]> {
     dueLabel: row.due_label,
     evidenceRequired: row.evidence_required,
     risk: row.risk as Assignment['risk'],
+  }));
+}
+
+export async function replaceCorrectionAssignments(items: Assignment[]) {
+  const connection = await db();
+  await connection.withTransactionAsync(async () => {
+    await connection.runAsync('DELETE FROM correction_assignments');
+    for (const item of items) {
+      await connection.runAsync(
+        `INSERT INTO correction_assignments
+          (id, facility, title, due_label, evidence_required, risk, correction_note, correction_reviewed_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        item.id,
+        item.facility,
+        item.title,
+        item.dueLabel,
+        item.evidenceRequired,
+        item.risk,
+        item.correctionNote ?? '',
+        item.correctionReviewedAt ?? null,
+      );
+    }
+  });
+}
+
+export async function listCorrectionAssignments(): Promise<Assignment[]> {
+  const connection = await db();
+  const rows = await connection.getAllAsync<Record<string, string | null>>(
+    'SELECT * FROM correction_assignments ORDER BY correction_reviewed_at DESC',
+  );
+  return rows.map((row) => ({
+    id: String(row.id),
+    facility: String(row.facility),
+    title: String(row.title),
+    dueLabel: String(row.due_label),
+    evidenceRequired: String(row.evidence_required),
+    risk: String(row.risk) as Assignment['risk'],
+    correctionNote: String(row.correction_note),
+    correctionReviewedAt: row.correction_reviewed_at,
   }));
 }
 

@@ -30,7 +30,14 @@ import {
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView, initialWindowMetrics } from 'react-native-safe-area-context';
 import { fetchCorrectionAssignments, syncQueuedSubmissions } from './src/api';
-import { initializeDatabase, listAssignments, listSubmissions, saveSubmission } from './src/storage';
+import {
+  initializeDatabase,
+  listAssignments,
+  listCorrectionAssignments,
+  listSubmissions,
+  replaceCorrectionAssignments,
+  saveSubmission,
+} from './src/storage';
 import { fonts, palette, radii } from './src/theme';
 import type { Assignment, LocationPoint, QueuedSubmission } from './src/types';
 
@@ -68,7 +75,9 @@ export default function App() {
 
   async function refreshCorrections() {
     try {
-      setCorrections(await fetchCorrectionAssignments());
+      const latest = await fetchCorrectionAssignments();
+      await replaceCorrectionAssignments(latest);
+      setCorrections(latest);
     } catch {
       // The field workflow remains available from SQLite when the office API is unavailable.
     }
@@ -77,6 +86,7 @@ export default function App() {
   useEffect(() => {
     initializeDatabase()
       .then(async () => {
+        setCorrections(await listCorrectionAssignments());
         await refresh();
         await refreshCorrections();
       })
