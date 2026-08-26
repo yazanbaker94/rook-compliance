@@ -139,7 +139,7 @@ python -m uvicorn app.main:app --app-dir services/ai --reload --port 8000
 npm run dev:mobile
 ```
 
-For a physical Android phone, the checked-in default uses the public production API at `https://swoop.video/corvus`. For local-only development, copy `.env.example` to `.env` and override `EXPO_PUBLIC_API_URL` with your computer's LAN address over trusted Wi-Fi. Android emulators can use `http://10.0.2.2:4000`.
+For a physical Android phone, the checked-in default uses the public production API at `https://swoop.video/corvus`. For local-only development, copy `.env.example` to `.env` and override `EXPO_PUBLIC_API_URL` with the development machine's LAN address over trusted Wi-Fi. Android emulators can use `http://10.0.2.2:4000`.
 
 ## Verify everything
 
