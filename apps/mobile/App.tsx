@@ -15,6 +15,7 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  AppState,
   Image,
   ImageBackground,
   KeyboardAvoidingView,
@@ -28,7 +29,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView, initialWindowMetrics } from 'react-native-safe-area-context';
-import { syncQueuedSubmissions } from './src/api';
+import { fetchCorrectionAssignments, syncQueuedSubmissions } from './src/api';
 import { initializeDatabase, listAssignments, listSubmissions, saveSubmission } from './src/storage';
 import { fonts, palette, radii } from './src/theme';
 import type { Assignment, LocationPoint, QueuedSubmission } from './src/types';
@@ -52,6 +53,7 @@ export default function App() {
   });
   const [screen, setScreen] = useState<Screen>('home');
   const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [corrections, setCorrections] = useState<Assignment[]>([]);
   const [submissions, setSubmissions] = useState<QueuedSubmission[]>([]);
   const [selected, setSelected] = useState<Assignment | null>(null);
   const [isOnline, setIsOnline] = useState<boolean | null>(null);
@@ -64,15 +66,42 @@ export default function App() {
     setSubmissions(nextSubmissions);
   }
 
+  async function refreshCorrections() {
+    try {
+      setCorrections(await fetchCorrectionAssignments());
+    } catch {
+      // The field workflow remains available from SQLite when the office API is unavailable.
+    }
+  }
+
   useEffect(() => {
     initializeDatabase()
-      .then(refresh)
+      .then(async () => {
+        await refresh();
+        await refreshCorrections();
+      })
       .catch((error) => Alert.alert('Database error', String(error)))
       .finally(() => setLoading(false));
     Network.getNetworkStateAsync().then((state) => setIsOnline(Boolean(state.isConnected && state.isInternetReachable !== false)));
-    const listener = Network.addNetworkStateListener((state) => setIsOnline(Boolean(state.isConnected && state.isInternetReachable !== false)));
-    return () => listener.remove();
+    const listener = Network.addNetworkStateListener((state) => {
+      const online = Boolean(state.isConnected && state.isInternetReachable !== false);
+      setIsOnline(online);
+      if (online) void refreshCorrections();
+    });
+    const appStateListener = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void refreshCorrections();
+    });
+    return () => {
+      listener.remove();
+      appStateListener.remove();
+    };
   }, []);
+
+  useEffect(() => {
+    if (!isOnline) return undefined;
+    const interval = setInterval(() => { void refreshCorrections(); }, 20_000);
+    return () => clearInterval(interval);
+  }, [isOnline]);
 
   const queuedCount = useMemo(() => submissions.filter((item) => item.syncState === 'QUEUED').length, [submissions]);
 
@@ -81,6 +110,7 @@ export default function App() {
     try {
       const result = await syncQueuedSubmissions(submissions);
       await refresh();
+      await refreshCorrections();
       if (result.reason === 'empty') Alert.alert('Everything is synced', 'There are no pending field records.');
       if (result.reason === 'offline') Alert.alert('Saved offline', 'Your records are safe on this device. Sync when a connection is available.');
       if (result.reason === 'success') Alert.alert('Sync complete', `${result.synced} field record${result.synced === 1 ? '' : 's'} sent for consultant review.`);
@@ -110,7 +140,7 @@ export default function App() {
           <StatusBar style="dark" />
           <Header isOnline={isOnline} backLabel={screen === 'home' ? undefined : 'Assignments'} onBack={() => setScreen('home')} />
           {screen === 'home' && (
-            <Home assignments={assignments} queuedCount={queuedCount} isOnline={isOnline} onOpen={openAssignment} onQueue={() => setScreen('queue')} />
+            <Home assignments={assignments} corrections={corrections} queuedCount={queuedCount} isOnline={isOnline} onOpen={openAssignment} onQueue={() => setScreen('queue')} />
           )}
           {screen === 'capture' && selected && <Capture assignment={selected} onSaved={finishSave} />}
           {screen === 'queue' && (
@@ -168,8 +198,9 @@ function ConnectionStamp({ isOnline }: { isOnline: boolean | null }) {
   );
 }
 
-function Home({ assignments, queuedCount, isOnline, onOpen, onQueue }: {
+function Home({ assignments, corrections, queuedCount, isOnline, onOpen, onQueue }: {
   assignments: Assignment[];
+  corrections: Assignment[];
   queuedCount: number;
   isOnline: boolean | null;
   onOpen: (item: Assignment) => void;
@@ -183,10 +214,16 @@ function Home({ assignments, queuedCount, isOnline, onOpen, onQueue }: {
         <Text style={styles.subtitle}>{isOnline === false ? "You’re offline. No problem—keep working. We’ll sync when you’re back online." : 'Assignments are cached on this device, so you can keep working outside coverage.'}</Text>
       </View>
       {queuedCount > 0 && (
-        <Pressable style={styles.syncBanner} onPress={onQueue}>
-          <View><Text style={styles.syncBannerLabel}>{isOnline === false ? 'WORKING LOCALLY' : 'READY TO SYNC'}</Text><Text style={styles.syncBannerTitle}>{queuedCount} field record{queuedCount === 1 ? '' : 's'} waiting</Text></View>
+        <Pressable style={({ pressed }) => [styles.syncBanner, pressed && styles.syncBannerPressed]} onPress={onQueue}>
+          <View><Text style={styles.syncBannerLabel}>{isOnline === false ? 'WORKING LOCALLY' : 'READY TO SYNC'}</Text><Text style={styles.syncBannerTitle}>{queuedCount} field record{queuedCount === 1 ? '' : 's'} waiting</Text><Text style={styles.syncBannerAction}>OPEN SYNC QUEUE</Text></View>
           <Text style={styles.syncArrow}>→</Text>
         </Pressable>
+      )}
+      {corrections.length > 0 && (
+        <View style={styles.correctionSection}>
+          <View style={styles.sectionHeading}><Text style={styles.sectionTitle}>Corrections requested</Text><Text style={[styles.count, styles.correctionCount]}>{corrections.length}</Text></View>
+          {corrections.map((assignment) => <CorrectionCard key={assignment.id} assignment={assignment} onOpen={() => onOpen(assignment)} />)}
+        </View>
       )}
       <View style={styles.sectionHeading}><Text style={styles.sectionTitle}>Assigned to you</Text><Text style={styles.count}>{assignments.length}</Text></View>
       {assignments.map((assignment) => <AssignmentCard key={assignment.id} assignment={assignment} onOpen={() => onOpen(assignment)} />)}
@@ -199,6 +236,18 @@ function Home({ assignments, queuedCount, isOnline, onOpen, onQueue }: {
         </View>
       </View>
     </ScrollView>
+  );
+}
+
+function CorrectionCard({ assignment, onOpen }: { assignment: Assignment; onOpen: () => void }) {
+  return (
+    <Pressable style={({ pressed }) => [styles.correctionCard, pressed && styles.correctionCardPressed]} onPress={onOpen}>
+      <Text style={styles.correctionStamp}>CORRECTION REQUESTED</Text>
+      <Text style={styles.correctionFacility}>{assignment.facility}</Text>
+      <Text style={styles.correctionTitle}>{assignment.title}</Text>
+      <View style={styles.correctionNote}><Text style={styles.correctionNoteLabel}>CONSULTANT NOTE</Text><Text style={styles.correctionNoteText}>{assignment.correctionNote}</Text></View>
+      <View style={styles.correctionOpenRow}><Text style={styles.correctionOpenLabel}>OPEN AND RESUBMIT</Text><Text style={styles.correctionOpenArrow}>→</Text></View>
+    </Pressable>
   );
 }
 
@@ -225,13 +274,16 @@ function Capture({ assignment, onSaved }: { assignment: Assignment; onSaved: (de
   const [saved, setSaved] = useState(false);
   const [savedModalVisible, setSavedModalVisible] = useState(false);
   const isFugitiveSurvey = assignment.id === 'obl-fugitive-01';
+  const isGroundwater = assignment.title.toLowerCase().includes('groundwater');
   const requiresPhoto = assignment.evidenceRequired.toLowerCase().includes('photo');
   const checklist = isFugitiveSurvey
     ? ['Survey route and component inventory are complete', 'All detected leaks and exceptions are documented', 'Repair status and follow-up dates are recorded']
+    : isGroundwater
+      ? ['Monitoring well is accessible and correctly identified', 'Well condition and surrounding area are documented', 'Reading and corrective evidence are complete']
     : ['Discharge point is accessible and unobstructed', 'No visible sheen, odour or abnormal colour observed', 'Reading collected using the approved field method'];
-  const inspectionType = isFugitiveSurvey ? 'Quarterly LDAR survey' : 'Monthly wastewater inspection';
-  const readingLabel = isFugitiveSurvey ? 'Survey result or component count' : 'Discharge reading or observation';
-  const readingPlaceholder = isFugitiveSurvey ? 'e.g. 426 components · 0 exceedances' : 'e.g. pH 7.4';
+  const inspectionType = isFugitiveSurvey ? 'Quarterly LDAR survey' : isGroundwater ? 'Groundwater monitoring follow-up' : 'Monthly wastewater inspection';
+  const readingLabel = isFugitiveSurvey ? 'Survey result or component count' : isGroundwater ? 'Groundwater reading or observation' : 'Discharge reading or observation';
+  const readingPlaceholder = isFugitiveSurvey ? 'e.g. 426 components · 0 exceedances' : isGroundwater ? 'e.g. pH 7.2 · clear' : 'e.g. pH 7.4';
 
   async function capturePhoto() {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
@@ -289,6 +341,7 @@ function Capture({ assignment, onSaved }: { assignment: Assignment; onSaved: (de
         <View style={styles.captureHeading}>
           <Text style={styles.eyebrow}>{assignment.facility}</Text><Text style={styles.captureTitle}>{assignment.title}</Text><Text style={styles.captureMeta}>{assignment.dueLabel} · {inspectionType}</Text><View style={styles.headerRule} />
         </View>
+        {assignment.correctionNote && <View style={styles.captureCorrection}><Text style={styles.captureCorrectionLabel}>CORRECTION REQUESTED</Text><Text style={styles.captureCorrectionText}>{assignment.correctionNote}</Text></View>}
         <FieldSection number="01" title="CHECKLIST">
           {checklist.map((label, index) => (
             <Pressable key={label} style={styles.checkRow} onPress={() => setChecked((current) => current.map((value, itemIndex) => itemIndex === index ? !value : value))}>
@@ -345,8 +398,8 @@ function Queue({ submissions, queuedCount, syncing, isOnline, onSync }: { submis
     <ScrollView contentContainerStyle={styles.screen} showsVerticalScrollIndicator={false}>
       <View style={styles.queueHeading}><Text style={styles.eyebrow}>OFFLINE-FIRST DELIVERY</Text><Text style={styles.title}>Sync queue.</Text><Text style={styles.subtitle}>{queuedCount ? 'Your work is stored locally until the server confirms receipt.' : 'Every field record has reached the office console.'}</Text></View>
       {queuedCount > 0 ? (
-        <Pressable disabled={syncing} style={[styles.queueAction, syncing && styles.primaryButtonDisabled]} onPress={onSync}>
-          {syncing ? <ActivityIndicator color={palette.white} /> : <><View><Text style={styles.queueActionLabel}>{isOnline ? 'SYNC PENDING RECORDS' : 'OFFLINE · RECORDS ARE SAFE'}</Text><Text style={styles.queueActionCount}>{queuedCount}</Text></View><Text style={styles.queueActionIcon}>{isOnline ? '↥' : '⌁'}</Text></>}
+        <Pressable disabled={syncing} style={({ pressed }) => [styles.queueAction, syncing && styles.primaryButtonDisabled, pressed && styles.queueActionPressed]} onPress={onSync}>
+          {syncing ? <ActivityIndicator color={palette.white} /> : <><View><Text style={styles.queueActionLabel}>{isOnline ? 'SYNC PENDING RECORDS' : 'OFFLINE · RECORDS ARE SAFE'}</Text><Text style={styles.queueActionCount}>{queuedCount}</Text><Text style={styles.queueActionHint}>{isOnline ? 'TAP TO UPLOAD TO ROOK CONSOLE' : 'UPLOAD AVAILABLE WHEN ONLINE'}</Text></View><Text style={styles.queueActionIcon}>{isOnline ? '→' : '⌁'}</Text></>}
         </Pressable>
       ) : (
         <View style={styles.emptyQueue}><View style={styles.emptyMark}><Text style={styles.emptyMarkText}>✓</Text></View><Text style={styles.emptyTitle}>All caught up.</Text><Text style={styles.emptyText}>No records waiting to sync.</Text></View>
@@ -392,12 +445,27 @@ const styles = StyleSheet.create({
   title: { color: palette.forestDark, fontFamily: fonts.bodyExtraBold, fontSize: 34, lineHeight: 40, letterSpacing: -1.25 },
   subtitle: { maxWidth: 390, marginTop: 8, color: '#52615B', fontFamily: fonts.body, fontSize: 16, lineHeight: 24 },
   syncBanner: { minHeight: 94, marginBottom: 27, paddingHorizontal: 19, paddingVertical: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderWidth: 1, borderColor: palette.forestDark, borderRadius: radii.panel, backgroundColor: palette.forestDeep },
+  syncBannerPressed: { borderColor: palette.acidLime, backgroundColor: '#0B4439', transform: [{ scale: 0.995 }] },
   syncBannerLabel: { color: palette.acidLime, fontFamily: fonts.technicalBold, fontSize: 11, letterSpacing: 1.1 },
   syncBannerTitle: { marginTop: 5, color: palette.white, fontFamily: fonts.bodyBold, fontSize: 18 },
+  syncBannerAction: { marginTop: 11, color: '#DCE8E2', fontFamily: fonts.technicalBold, fontSize: 9, letterSpacing: 0.65 },
   syncArrow: { color: palette.acidLime, fontFamily: fonts.bodyMedium, fontSize: 25 },
   sectionHeading: { marginBottom: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   sectionTitle: { color: palette.ink, fontFamily: fonts.bodyBold, fontSize: 18 },
   count: { minWidth: 29, paddingVertical: 4, paddingHorizontal: 7, overflow: 'hidden', color: palette.ink, borderRadius: radii.stamp, backgroundColor: '#E5E6DE', fontFamily: fonts.technicalBold, fontSize: 11, textAlign: 'center' },
+  correctionSection: { marginBottom: 14 },
+  correctionCount: { color: '#A33E36', borderWidth: 1, borderColor: '#D79590', backgroundColor: 'rgba(255,235,231,0.72)' },
+  correctionCard: { marginBottom: 16, overflow: 'hidden', borderWidth: 1.5, borderColor: '#C25149', borderRadius: radii.panel, backgroundColor: 'rgba(255,249,241,0.88)' },
+  correctionCardPressed: { borderColor: palette.forestDeep, backgroundColor: 'rgba(243,237,217,0.96)', transform: [{ scale: 0.995 }] },
+  correctionStamp: { alignSelf: 'flex-start', marginTop: 16, marginLeft: 17, paddingHorizontal: 8, paddingVertical: 5, color: '#A33E36', borderWidth: 1, borderColor: '#D79590', borderRadius: radii.stamp, fontFamily: fonts.technicalBold, fontSize: 9, letterSpacing: 0.55 },
+  correctionFacility: { marginTop: 15, paddingHorizontal: 17, color: '#5C6A64', fontFamily: fonts.bodyMedium, fontSize: 14 },
+  correctionTitle: { marginTop: 5, paddingHorizontal: 17, color: palette.ink, fontFamily: fonts.bodyBold, fontSize: 20, lineHeight: 25, letterSpacing: -0.45 },
+  correctionNote: { margin: 17, padding: 13, borderLeftWidth: 3, borderLeftColor: palette.red, backgroundColor: 'rgba(245,226,216,0.48)' },
+  correctionNoteLabel: { marginBottom: 6, color: '#8F3E39', fontFamily: fonts.technicalBold, fontSize: 9, letterSpacing: 0.7 },
+  correctionNoteText: { color: '#493F39', fontFamily: fonts.bodyMedium, fontSize: 14, lineHeight: 20 },
+  correctionOpenRow: { minHeight: 54, paddingHorizontal: 17, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: '#C25149', backgroundColor: palette.forestDeep },
+  correctionOpenLabel: { color: palette.acidLime, fontFamily: fonts.technicalBold, fontSize: 11, letterSpacing: 0.5 },
+  correctionOpenArrow: { color: palette.acidLime, fontFamily: fonts.bodyBold, fontSize: 20 },
   assignment: { marginBottom: 13, paddingHorizontal: 17, paddingTop: 16, borderWidth: 1, borderColor: '#8C9691', borderRadius: radii.panel, backgroundColor: 'rgba(251,249,243,0.78)' },
   assignmentPressed: { borderColor: palette.forest, backgroundColor: 'rgba(232,238,225,0.92)' },
   assignmentTop: { marginBottom: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
@@ -425,6 +493,9 @@ const styles = StyleSheet.create({
   captureTitle: { color: palette.forestDark, fontFamily: fonts.bodyExtraBold, fontSize: 31, lineHeight: 36, letterSpacing: -1 },
   captureMeta: { marginTop: 9, color: '#53625C', fontFamily: fonts.body, fontSize: 15, lineHeight: 22 },
   headerRule: { width: 42, height: 3, marginTop: 14, backgroundColor: palette.acidLime },
+  captureCorrection: { marginBottom: 16, padding: 15, borderWidth: 1, borderColor: '#C25149', borderLeftWidth: 4, backgroundColor: 'rgba(255,240,229,0.72)' },
+  captureCorrectionLabel: { marginBottom: 7, color: '#A33E36', fontFamily: fonts.technicalBold, fontSize: 10, letterSpacing: 0.7 },
+  captureCorrectionText: { color: '#493F39', fontFamily: fonts.bodySemiBold, fontSize: 15, lineHeight: 22 },
   formCard: { marginBottom: 13, paddingHorizontal: 17, paddingTop: 17, borderWidth: 1, borderColor: '#8C9691', borderRadius: radii.panel, backgroundColor: 'rgba(251,249,243,0.76)' },
   formStep: { marginBottom: 12, color: palette.forestDark, fontFamily: fonts.technicalBold, fontSize: 11, letterSpacing: 0.9 },
   checkRow: { minHeight: 68, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', gap: 13, borderBottomWidth: 1, borderBottomColor: '#B7BEB9' },
@@ -466,8 +537,10 @@ const styles = StyleSheet.create({
   modalSecondaryText: { color: palette.forest, fontFamily: fonts.technicalBold, fontSize: 11, letterSpacing: 0.5 },
   queueHeading: { marginBottom: 21 },
   queueAction: { minHeight: 91, marginBottom: 15, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderColor: palette.forestDark, borderRadius: radii.panel, backgroundColor: palette.forestDeep },
+  queueActionPressed: { borderColor: palette.acidLime, backgroundColor: '#0B4439', transform: [{ scale: 0.995 }] },
   queueActionLabel: { color: palette.acidLime, fontFamily: fonts.technicalBold, fontSize: 11, letterSpacing: 0.7 },
   queueActionCount: { marginTop: 5, color: palette.white, fontFamily: fonts.bodyBold, fontSize: 19 },
+  queueActionHint: { marginTop: 7, color: '#DCE8E2', fontFamily: fonts.technicalBold, fontSize: 8, letterSpacing: 0.5 },
   queueActionIcon: { color: palette.acidLime, fontFamily: fonts.bodyMedium, fontSize: 27 },
   emptyQueue: { minHeight: 250, marginBottom: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderStyle: 'dashed', borderColor: '#87948D', borderRadius: radii.panel, backgroundColor: 'rgba(251,249,243,0.56)' },
   emptyMark: { width: 54, height: 54, marginBottom: 15, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: palette.forest, borderRadius: 27 },

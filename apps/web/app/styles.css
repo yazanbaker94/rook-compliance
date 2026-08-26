@@ -464,10 +464,13 @@ textarea { resize: vertical; }
   text-align: left;
 }
 .register-row:hover { background: rgba(198,220,69,.07); }
+.register-row:hover .register-owner b, .register-row:focus-visible .register-owner b { color: var(--green-deep); background: var(--lime); }
 .register-row.selected { background: rgba(198,220,69,.14); }
 .register-row.selected::before { position: absolute; inset: 0 auto 0 0; width: 3px; content: ""; background: #829943; }
 .register-row > span:first-child strong { display: block; font-family: var(--font-humanist), sans-serif; font-size: 10px; }
 .register-row small { margin-top: 2px; color: #31433c; font-size: 7px; line-height: 1.35; }
+.register-owner { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.register-owner b { padding: 4px 5px; color: var(--green-2); border: 1px solid currentColor; font: 600 7px var(--font-technical), monospace; letter-spacing: .03em; white-space: nowrap; }
 .detail-drawer { display: flex; min-width: 0; min-height: 650px; flex-direction: column; overflow: hidden; }
 .drawer-heading { display: flex; min-height: 150px; padding: 21px 20px 16px; align-items: flex-start; gap: 12px; }
 .drawer-heading small { margin-bottom: 14px; color: var(--red); font: 600 8px var(--font-technical), monospace; text-transform: uppercase; }
@@ -564,7 +567,8 @@ textarea { resize: vertical; }
 /* Field evidence */
 .field-review-layout { display: grid; grid-template-columns: minmax(230px, .7fr) minmax(250px, .78fr) minmax(360px, 1.15fr) minmax(280px, .83fr); gap: 12px; align-items: stretch; }
 .submission-list { overflow: hidden; }
-.submission-list > h2 { min-height: 59px; padding: 20px 17px; border-bottom: 1px solid var(--line); }
+.submission-list > h2 { display: flex; min-height: 59px; padding: 20px 17px; align-items: center; justify-content: space-between; gap: 8px; border-bottom: 1px solid var(--line); }
+.submission-list > h2 small { color: #4e5d57; font: 600 7px var(--font-technical), monospace; letter-spacing: .04em; text-transform: uppercase; }
 .submission-list > button {
   display: grid;
   width: 100%;
@@ -578,6 +582,7 @@ textarea { resize: vertical; }
   background: transparent;
   text-align: left;
 }
+.submission-list > button:hover, .submission-list > button:focus-visible { background: rgba(198,220,69,.12); box-shadow: inset 4px 0 0 var(--lime); }
 .submission-list > button.active {
   color: white;
   background-color: var(--green-deep);
@@ -587,8 +592,11 @@ textarea { resize: vertical; }
 .submission-list > button strong { font-size: 11px; }
 .submission-list > button small { margin-top: 5px; color: #41504b; font: 400 8px var(--font-technical), monospace; }
 .submission-list > button.active small { color: #d2ded8; }
-.submission-list > button .status-pill { grid-column: 2; }
+.submission-record-footer { display: flex; grid-column: 2; align-items: center; justify-content: space-between; gap: 8px; }
+.record-action { color: var(--green-2); font: 600 7px var(--font-technical), monospace; letter-spacing: .025em; white-space: nowrap; }
+.submission-list > button:hover .record-action, .submission-list > button:focus-visible .record-action { text-decoration: underline; text-underline-offset: 3px; }
 .submission-list > button.active .status-pill { color: var(--lime); }
+.submission-list > button.active .record-action { color: var(--lime); }
 .submission-summary, .evidence-content, .review-actions-panel { overflow: hidden; }
 .section-number {
   display: flex;

@@ -5,7 +5,11 @@ export type Assignment = {
   dueLabel: string;
   evidenceRequired: string;
   risk: 'HIGH' | 'MEDIUM' | 'LOW';
+  correctionNote?: string;
+  correctionReviewedAt?: string | null;
 };
+
+export type SubmissionReviewStatus = 'PENDING' | 'APPROVED' | 'CORRECTION_REQUESTED';
 
 export type LocationPoint = {
   latitude: number;
