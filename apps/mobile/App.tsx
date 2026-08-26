@@ -287,16 +287,21 @@ function Capture({ assignment, onSaved }: { assignment: Assignment; onSaved: (de
   const [saved, setSaved] = useState(false);
   const [savedModalVisible, setSavedModalVisible] = useState(false);
   const isFugitiveSurvey = assignment.id === 'obl-fugitive-01';
-  const isGroundwater = assignment.title.toLowerCase().includes('groundwater');
+  const normalizedAssignment = `${assignment.title} ${assignment.evidenceRequired}`.toLowerCase();
+  const isGroundwater = normalizedAssignment.includes('groundwater') || normalizedAssignment.includes('well');
+  const isWastewater = normalizedAssignment.includes('wastewater') || normalizedAssignment.includes('discharge');
+  const isRecordsWork = normalizedAssignment.includes('retain') || normalizedAssignment.includes('certificate') || normalizedAssignment.includes('record');
   const requiresPhoto = assignment.evidenceRequired.toLowerCase().includes('photo');
   const checklist = isFugitiveSurvey
     ? ['Survey route and component inventory are complete', 'All detected leaks and exceptions are documented', 'Repair status and follow-up dates are recorded']
     : isGroundwater
       ? ['Monitoring well is accessible and correctly identified', 'Well condition and surrounding area are documented', 'Reading and corrective evidence are complete']
-    : ['Discharge point is accessible and unobstructed', 'No visible sheen, odour or abnormal colour observed', 'Reading collected using the approved field method'];
-  const inspectionType = isFugitiveSurvey ? 'Quarterly LDAR survey' : isGroundwater ? 'Groundwater monitoring follow-up' : 'Monthly wastewater inspection';
-  const readingLabel = isFugitiveSurvey ? 'Survey result or component count' : isGroundwater ? 'Groundwater reading or observation' : 'Discharge reading or observation';
-  const readingPlaceholder = isFugitiveSurvey ? 'e.g. 426 components · 0 exceedances' : isGroundwater ? 'e.g. pH 7.2 · clear' : 'e.g. pH 7.4';
+      : isWastewater
+        ? ['Discharge point is accessible and unobstructed', 'No visible sheen, odour or abnormal colour observed', 'Reading collected using the approved field method']
+        : ['Assigned requirement and facility context are reviewed', 'Required action is complete', 'Supporting evidence or record reference is documented'];
+  const inspectionType = isFugitiveSurvey ? 'Quarterly LDAR survey' : isGroundwater ? 'Groundwater monitoring follow-up' : isWastewater ? 'Wastewater inspection' : assignment.evidenceRequired;
+  const readingLabel = isFugitiveSurvey ? 'Survey result or component count' : isGroundwater ? 'Groundwater reading or observation' : isWastewater ? 'Discharge reading or observation' : isRecordsWork ? 'Record reference or completion result' : 'Completion record or observation';
+  const readingPlaceholder = isFugitiveSurvey ? 'e.g. 426 components · 0 exceedances' : isGroundwater ? 'e.g. pH 7.2 · clear' : isWastewater ? 'e.g. pH 7.4' : isRecordsWork ? 'e.g. Certificate batch LAB-2026-08 archived' : 'e.g. Completed · no exceptions';
 
   async function capturePhoto() {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
