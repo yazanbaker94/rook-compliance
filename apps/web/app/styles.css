@@ -679,6 +679,87 @@ textarea { resize: vertical; }
 .photo-lightbox-footer div { text-align: center; }
 .photo-lightbox-footer small { color: #52615a; font: 400 8px var(--font-technical), monospace; }
 
+/* Readability scale: preserve the technical-document hierarchy without microtype. */
+body { font-size: 15px; line-height: 1.48; }
+.nav-item { font-size: 13px; }
+.nav-index { font-size: 11px; }
+.user-card strong { font-size: 14px; }
+.user-card small, .sidebar-note span { font-size: 11px; }
+.sidebar-note strong { font-size: 11px; }
+.eyebrow { font-size: 11px; }
+.page-description { font-size: 15px; }
+.connection, .avatar { font-size: 10.5px; }
+.primary-button, .secondary-button, .reject-button, .approve-button, .correction-button {
+  min-height: 43px;
+  font-size: 11.5px;
+}
+.panel-heading h2, .submission-list > h2 { font-size: 13px; }
+.text-button { font-size: 10.5px; }
+.risk-pill, .status-pill { font-size: 10px; }
+.technical-label { font-size: 10.5px; }
+
+.attention-card small { font-size: 11px; }
+.attention-card p { font-size: 11.5px; }
+.attention-card b { font-size: 10.5px; }
+.obligation-line strong, .readiness-row strong { font-size: 12.5px; }
+.obligation-line small, .readiness-row small { font-size: 10.5px; line-height: 1.45; }
+.obligation-line time { font-size: 10.5px; }
+.facility-row-icon, .queue-grid i { font-size: 10px; }
+.queue-grid span, .queue-grid small { font-size: 10px; }
+
+.facility-health, .facility-card dt, .insight strong { font-size: 10.5px; }
+.insight span { font-size: 11.5px; line-height: 1.5; }
+
+.register-tabs { font-size: 10.5px; }
+.register-tabs span { font-size: 10px; }
+.filter-bar label, .modal label, .edit-form label, .document-selector label { font-size: 10.5px; }
+input, select, textarea { min-height: 42px; font-size: 13px; line-height: 1.4; }
+.record-count, .register-head { font-size: 10px; }
+.register-row { min-height: 64px; font-size: 10.5px; }
+.register-row > span:first-child strong { font-size: 11.5px; }
+.register-row small { font-size: 10px; line-height: 1.4; }
+.drawer-heading small, .drawer-heading p, .detail-tabs button,
+.detail-list dt, .drawer-submission dt { font-size: 10.5px; }
+.drawer-heading h2 { font-size: 24.5px; }
+.detail-list dd { font-size: 11.5px; }
+.detail-list dd small, .drawer-submission-heading small { font-size: 10.5px; }
+.drawer-submission dd, .drawer-audit p { font-size: 11.5px; }
+.drawer-audit small, .audit-timeline small { font-size: 10.5px; }
+
+.proposal-progress, .pdf-toolbar { font-size: 10px; }
+.pdf-sheet small, .source-strip strong, .proposal-editor-heading small,
+.proposal-fields dt, .confidence { font-size: 10.5px; }
+.pdf-sheet footer { font-size: 10.5px; }
+.source-strip blockquote { font-size: 12px; line-height: 1.5; }
+.source-strip span { font-size: 10.5px; }
+.proposal-fields dd { font-size: 12.5px; line-height: 1.45; }
+.review-principle strong { font-size: 10.5px; }
+.review-principle p { font-size: 11.5px; line-height: 1.45; }
+
+.submission-list > button strong { font-size: 12.5px; }
+.submission-list > button small { font-size: 10.5px; line-height: 1.45; }
+.section-number span { font-size: 10px; }
+.section-number h2 { font-size: 12.5px; }
+.summary-details dt { font-size: 10px; }
+.summary-details dd { font-size: 11.5px; line-height: 1.45; }
+.summary-details dd small { font-size: 10.5px; }
+.sync-timeline > strong { font-size: 10.5px; }
+.sync-timeline small { font-size: 9px; line-height: 1.3; }
+.mini-map span { font-size: 10px; }
+.reading small, .field-note small { font-size: 10px; }
+.reading strong { font-size: 22px; }
+.photo-heading { font-size: 10.5px; }
+.evidence-photo > span { font-size: 10px; }
+.evidence-photo small { font-size: 9px; }
+.field-note p { font-size: 11.5px; line-height: 1.5; }
+.review-actions-panel label, .review-note strong, .audit-timeline > strong,
+.audit-timeline article strong { font-size: 10.5px; }
+.review-note p { font-size: 11.5px; line-height: 1.45; }
+.drawer-empty p { font-size: 11px; }
+.toast { font-size: 10.5px; }
+.modal-heading h2, .photo-lightbox-heading h2 { font-size: 28px; }
+.photo-lightbox-footer small { font-size: 10.5px; }
+
 @media (max-width: 1280px) {
   .workspace { padding-right: 20px; padding-left: 20px; }
   .topbar { flex-direction: column; gap: 14px; }
