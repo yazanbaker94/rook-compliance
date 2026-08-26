@@ -1,6 +1,10 @@
 # Rook Compliance
 
-Rook is a proof-of-work product built for a simple problem: environmental consultants receive dense approvals and permits, then must turn those documents into recurring work, collect reliable evidence in the field, and prove what happened later.
+**Environmental obligations, field execution, and evidence review in one traceable workflow.**
+
+[Live product](https://swoop.video/corvus) · [Android release](https://github.com/yazanbaker94/rook-compliance/releases/tag/v0.1.0) · [Verification record](docs/VERIFICATION.md) · [Architecture decisions](docs/DECISIONS.md)
+
+Rook is an end-to-end product demonstration for a recurring environmental-operations problem: consultants receive dense approvals and permits, translate them into operational commitments, dispatch field work, collect reliable evidence, and preserve a defensible history of what happened.
 
 It is deliberately one coherent product—not a pile of unrelated portfolio demos:
 
@@ -10,6 +14,30 @@ It is deliberately one coherent product—not a pile of unrelated portfolio demo
 - **Rook Document Intelligence** extracts draft obligations from text or PDFs and always requires human approval.
 
 All companies, facilities, people, approvals, and readings in this repository are synthetic. This independent demonstration is not a Corvus Consulting product and does not imply access to any private client information.
+
+## Product showcase
+
+### Consultant console
+
+The web console combines portfolio awareness, facility readiness, obligation ownership, human-reviewed document extraction, and field-evidence decisions.
+
+![Rook consultant overview](docs/screenshots/web/01-overview.png)
+
+| Facilities and readiness | Obligation register |
+| --- | --- |
+| ![Facility readiness](docs/screenshots/web/02-facilities.png) | ![Obligation register](docs/screenshots/web/03-obligations.png) |
+
+| Approval review | Field evidence review |
+| --- | --- |
+| ![Approval review](docs/screenshots/web/04-approval-review.png) | ![Field evidence review](docs/screenshots/web/05-field-evidence.png) |
+
+### Android field companion
+
+Rook Field receives work assigned to Jordan Lee, keeps assignments available on-device, captures structured inspection results, photos, and optional GPS, and queues submissions safely when connectivity is unavailable.
+
+| Assigned work | Inspection checklist | Evidence capture |
+| --- | --- | --- |
+| <img src="docs/screenshots/android/01-assignments.webp" alt="Rook Field assignments" width="280"> | <img src="docs/screenshots/android/02-assignment-detail.webp" alt="Rook Field inspection checklist" width="280"> | <img src="docs/screenshots/android/03-evidence-and-save.webp" alt="Rook Field evidence capture" width="280"> |
 
 ## The environmental idea, in plain English
 
@@ -26,11 +54,11 @@ The hard part is not merely reading the sentence. Someone must:
 
 Rook makes that chain visible. The AI is an assistant at step 1, never the environmental decision-maker.
 
-## Why this project fits the role
+## Engineering coverage
 
 The role asks for ownership from an unclear brief through architecture, design, implementation, testing, deployment, and ongoing support. Rook demonstrates the same shape of work with the listed stack:
 
-| Need in the role | Evidence in Rook |
+| Capability | Evidence in Rook |
 |---|---|
 | Next.js, React, TypeScript | Interactive consultant console |
 | Node.js and APIs | GraphQL Yoga plus mobile REST sync |
@@ -138,9 +166,9 @@ Under the public `/corvus` prefix, Caddy routes the web app, GraphQL at `/corvus
 
 The production API uses Prisma migrations and PostgreSQL persistence seeded exclusively with deterministic synthetic data. Authentication, object storage, backups, monitoring, and client data-residency controls remain explicit prerequisites before this demonstration could hold real client information. See the [VPS runbook](docs/VPS-RUNBOOK.md).
 
-## Recruiter walkthrough
+## Evaluation path
 
-Use the focused [four-minute demo script](docs/DEMO-SCRIPT.md). It tells one story from approval PDF to accepted obligation to offline Android evidence and consultant review.
+The [four-minute product walkthrough](docs/DEMO-SCRIPT.md) follows one complete path: approval PDF → human-reviewed proposal → assigned obligation → offline Android evidence → consultant decision and audit history.
 
 ## Repository layout
 
@@ -150,5 +178,5 @@ apps/mobile     Expo/React Native Android field app
 services/api    Node.js, GraphQL Yoga, Prisma schema
 services/ai     FastAPI PDF/text extraction service
 infra           Caddy reverse-proxy configuration
-docs            decisions, demo script, and VPS runbook
+docs            screenshots, decisions, evaluation walkthrough, and VPS runbook
 ```

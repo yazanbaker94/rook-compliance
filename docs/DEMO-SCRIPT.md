@@ -1,45 +1,47 @@
-# Four-minute walkthrough
+# Four-minute product walkthrough
 
-## 0:00 — Frame the problem
+This evaluation path demonstrates the complete approval-to-evidence lifecycle with synthetic data.
 
-“Environmental consulting turns dense approvals into recurring operational work. I built Rook to carry one requirement all the way from the source document to reviewed field evidence.”
+## 0:00 — Problem and safety boundary
 
-Mention that every record is synthetic and that AI output cannot become a compliance obligation without a person.
+Environmental approvals contain commitments that must become scheduled, assigned, evidence-backed work. Rook preserves the relationship between the source clause, the operational obligation, the field submission, and the reviewer’s final decision.
 
-## 0:30 — Show portfolio awareness
+AI output remains a proposal until a consultant accepts it. No generated interpretation becomes an official obligation automatically.
 
-Open the web overview. Point to readiness, open work, pending evidence, and North Ridge’s explainable attention state. Open Facilities to show the site-level readiness cards.
+## 0:30 — Portfolio and facility awareness
 
-Say: “The score is a navigation aid, not an unexplained AI verdict.”
+The **Overview** presents high-risk work, open obligations, evidence awaiting review, pending document proposals, facility readiness, and the review queue.
 
-## 1:05 — Review an approval
+The **Facilities** view explains readiness at site level. Readiness is a navigation aid derived from open and high-risk obligations, not an unexplained model score.
 
-Choose **Import approval** and upload `output/pdf/corvus-synthetic-operating-approval.pdf`. Show that three clauses were found on physical pages 14, 18, and 22. Edit the operational wording, then accept one proposal.
+## 1:05 — Human-reviewed approval extraction
 
-Open **Obligations**. Search for the accepted item, open its source-linked detail, and move it from Open to In progress.
+The **Approvals & permits** workflow accepts [`output/pdf/corvus-synthetic-operating-approval.pdf`](../output/pdf/corvus-synthetic-operating-approval.pdf). The 22-page synthetic document produces three proposals with physical-page citations on pages 14, 18, and 22.
 
-Say: “Automation saves reading and transcription time, while the consultant retains authorship and accountability.”
+Each proposal exposes its source text, confidence, operational wording, frequency, evidence requirement, applicability, and decision state. Editing is audited. Acceptance creates a source-linked obligation; rejection remains in the audit trail.
 
-## 2:05 — Complete the work on Android
+## 2:05 — Assignment and offline field execution
 
-Open Rook Field. Turn on airplane mode if practical. Open the wastewater inspection, complete its checklist, enter a result, capture a photo/GPS point, and save.
+The **Obligations** register supports search, facility/status filters, source inspection, status changes, and owner assignment. Work assigned to **Jordan Lee** appears in Rook Field through the production mobile bootstrap API.
 
-Open the sync queue. Emphasize that the record is in SQLite and survives an app restart. Restore connectivity and sync.
+On Android, assignments are cached in SQLite. The field workflow records a checklist, reading or completion reference, field notes, camera evidence, and optional GPS. Saving is local-first, and each queued record carries a stable local identifier so retries cannot create duplicate evidence.
 
-Say: “Sync is idempotent, so repeated retries cannot duplicate the inspection.”
+## 3:10 — Evidence decision and audit closure
 
-## 3:10 — Close the loop
+After synchronization, **Field evidence** exposes the reading, capture time, sync state, GPS location, photos, field note, and review history. A consultant can approve the submission or return it with a correction note.
 
-Return to **Field evidence** in the web console. Review the reading, evidence count, location, capture time, sync timeline, and field note. Demonstrate a correction note, then approve the evidence and show the completed obligation plus review history.
+Approval completes the related obligation. A correction returns the obligation to field work and surfaces the reviewer note in the Android app.
 
-## 3:40 — Show engineering ownership
+## 3:40 — Engineering evidence
 
-Briefly show:
+The repository includes:
 
-- the GraphQL schema and REST sync endpoint;
-- the Python extractor and its tests;
-- the Prisma data model;
-- Docker Compose/Caddy; and
-- GitHub Actions verification.
+- a Next.js/TypeScript consultant console;
+- a Node.js GraphQL API and idempotent mobile REST sync contract;
+- a Prisma/PostgreSQL operational data model;
+- a FastAPI document-extraction service with PDF tests;
+- an Expo/React Native Android application with SQLite persistence;
+- Docker Compose, Caddy, and path-scoped Cloudflare routing; and
+- GitHub Actions verification and deployment workflows.
 
-Close with: “I started from the open-ended shape of Corvus’s work and made the product, architecture, UX, safety boundaries, mobile behavior, and deployment decisions end to end.”
+The current boundary is intentionally explicit: this is a production-shaped synthetic-data demonstration, not a system authorized to store real client information.

@@ -6,8 +6,8 @@ Choose the universal APK for the easiest installation across devices. The smalle
 
 | Artifact | Architecture | Size | SHA-256 |
 | --- | --- | ---: | --- |
-| `rook-field-v0.1.0-universal.apk` | arm64-v8a, armeabi-v7a, x86, x86_64 | 73.3 MiB | `8F7CD607246B2612A367CD8AF96E8B847CB04EB7999EDC0873829FBAE8CA61B2` |
-| `rook-field-v0.1.0-arm64.apk` | arm64-v8a | 27.7 MiB | `9221160F23735175730A01376CCC0941FC8304B84B4C635D85130FDDA9BB3D8C` |
+| `rook-field-v0.1.0-universal.apk` | arm64-v8a, armeabi-v7a, x86, x86_64 | 78.3 MiB | `EE9F6CA2F7D0B6F5CFB3C6227245D852C9F1B0A398C87DC52B759621DFC2CBE3` |
+| `rook-field-v0.1.0-arm64.apk` | arm64-v8a | 32.1 MiB | `433ABDDFD154DCF74EB1B71B57FC8704F34A15A697FEAD697128BFEE21664A44` |
 
 - Package: `ca.rookcompliance.field`
 - Version: `1.0.0` (`versionCode` 1)

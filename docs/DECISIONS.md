@@ -22,11 +22,11 @@ PDF parsing and future model inference have different dependencies and scaling c
 
 ## 6. Make the public demo safe and reproducible
 
-The checked-in dataset is synthetic and the runtime store resets on restart. This is useful for a recruiter demo and avoids pretending a portfolio prototype is production-ready. The Prisma schema captures the real PostgreSQL model without claiming that production concerns—authentication, tenancy, migrations, backups, retention, residency, and monitoring—are finished.
+The checked-in dataset is synthetic and deterministic. This supports a repeatable product evaluation without pretending that a portfolio prototype is authorized for client data. The production demo uses Prisma/PostgreSQL persistence, while authentication, tenancy, backups, retention, residency, and monitoring remain explicit hardening requirements.
 
 ## 7. Deploy the browser client and APIs differently when useful
 
-The web frontend can be hosted independently for fast portfolio access. The user's VPS is valuable for the stateful Node/Python services and an HTTPS API consumed by Android. The included Docker Compose option also supports putting the entire demonstration on one VPS.
+The web frontend and APIs can be hosted independently when useful. The current deployment runs the stateful Node/Python services and an HTTPS API consumed by Android on a dedicated VPS. The included Docker Compose configuration also supports operating the complete demonstration as one isolated stack.
 
 ## 8. Scope deliberately
 

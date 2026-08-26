@@ -1,11 +1,22 @@
-# Short outreach note
+# Project evaluation links
 
-Hi [name] — thank you for keeping me on the list. I took the ambiguity in the role description seriously and built a small end-to-end product around the kind of problem Corvus describes: a consultant reviews obligations extracted from an environmental approval, sends work to an offline Android field app, and reviews the returned evidence.
+Rook is an independent, synthetic-data demonstration of an environmental compliance workflow spanning document review, obligation management, offline field execution, and evidence approval.
 
-The demo uses synthetic data and keeps every AI proposal behind a human approval gate. It includes Next.js/TypeScript, Node/GraphQL, Prisma, Python document extraction, Expo Android, tests, CI, and a Docker/VPS deployment path.
+## Primary links
 
-- Live demo: https://swoop.video/corvus
-- Repository: https://github.com/yazanbaker94/rook-compliance
-- Four-minute walkthrough: https://github.com/yazanbaker94/rook-compliance/blob/main/docs/DEMO-SCRIPT.md
+- **Live consultant console:** https://swoop.video/corvus
+- **Source repository:** https://github.com/yazanbaker94/rook-compliance
+- **Android APKs:** https://github.com/yazanbaker94/rook-compliance/releases/tag/v0.1.0
+- **Four-minute walkthrough:** https://github.com/yazanbaker94/rook-compliance/blob/main/docs/DEMO-SCRIPT.md
+- **Verification record:** https://github.com/yazanbaker94/rook-compliance/blob/main/docs/VERIFICATION.md
 
-I would value your honest feedback on the product choices, even if the role ultimately goes to someone with more years in production.
+## Scope represented
+
+- Next.js, React, and TypeScript consultant experience
+- Node.js, GraphQL, Prisma, and PostgreSQL workflow services
+- Python/FastAPI document extraction with physical-page citations
+- Expo/React Native Android application with SQLite-backed offline behavior
+- End-to-end web-to-mobile assignment, evidence synchronization, review, and audit history
+- Docker/VPS deployment, private-origin routing, CI, and release artifacts
+
+Every facility, person, approval, reading, and field record is fictional. The repository contains no client data and makes no claim of affiliation with Corvus Consulting.
