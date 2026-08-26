@@ -7,7 +7,7 @@ Rook is an independent, synthetic-data demonstration of an environmental complia
 - **Live consultant console:** https://swoop.video/corvus
 - **Source repository:** https://github.com/yazanbaker94/rook-compliance
 - **Android APKs:** https://github.com/yazanbaker94/rook-compliance/releases/tag/v0.1.0
-- **Four-minute walkthrough:** https://github.com/yazanbaker94/rook-compliance/blob/main/docs/DEMO-SCRIPT.md
+- **Four-minute walkthrough:** https://github.com/yazanbaker94/rook-compliance/blob/main/docs/PRODUCT-WALKTHROUGH.md
 - **Verification record:** https://github.com/yazanbaker94/rook-compliance/blob/main/docs/VERIFICATION.md
 
 ## Scope represented

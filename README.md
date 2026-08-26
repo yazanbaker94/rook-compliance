@@ -2,7 +2,7 @@
 
 **Environmental obligations, field execution, and evidence review in one traceable workflow.**
 
-[Live product](https://swoop.video/corvus) · [Android release](https://github.com/yazanbaker94/rook-compliance/releases/tag/v0.1.0) · [Verification record](docs/VERIFICATION.md) · [Architecture decisions](docs/DECISIONS.md)
+[Live product](https://swoop.video/corvus) · [Android release](https://github.com/yazanbaker94/rook-compliance/releases/tag/v0.1.0) · [Product walkthrough](docs/PRODUCT-WALKTHROUGH.md) · [Verification record](docs/VERIFICATION.md) · [Architecture decisions](docs/DECISIONS.md)
 
 Rook is an end-to-end product demonstration for a recurring environmental-operations problem: consultants receive dense approvals and permits, translate them into operational commitments, dispatch field work, collect reliable evidence, and preserve a defensible history of what happened.
 
@@ -168,7 +168,7 @@ The production API uses Prisma migrations and PostgreSQL persistence seeded excl
 
 ## Evaluation path
 
-The [four-minute product walkthrough](docs/DEMO-SCRIPT.md) follows one complete path: approval PDF → human-reviewed proposal → assigned obligation → offline Android evidence → consultant decision and audit history.
+The [four-minute product walkthrough](docs/PRODUCT-WALKTHROUGH.md) follows one complete path: approval PDF → human-reviewed proposal → assigned obligation → offline Android evidence → consultant decision and audit history.
 
 ## Repository layout
 
