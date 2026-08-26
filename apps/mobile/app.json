@@ -42,7 +42,8 @@
         {
           "locationWhenInUsePermission": "Rook Field uses your location to geotag field evidence."
         }
-      ]
+      ],
+      "expo-font"
     ],
     "extra": {
       "eas": {
