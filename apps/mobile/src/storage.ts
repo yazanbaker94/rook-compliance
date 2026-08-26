@@ -59,7 +59,7 @@ export async function initializeDatabase() {
 
 export async function listAssignments(): Promise<Assignment[]> {
   const connection = await db();
-  const rows = await connection.getAllAsync<Record<string, string>>('SELECT * FROM assignments ORDER BY due_label');
+  const rows = await connection.getAllAsync<Record<string, string>>('SELECT * FROM assignments ORDER BY rowid');
   return rows.map((row) => ({
     id: row.id,
     facility: row.facility,
@@ -68,6 +68,25 @@ export async function listAssignments(): Promise<Assignment[]> {
     evidenceRequired: row.evidence_required,
     risk: row.risk as Assignment['risk'],
   }));
+}
+
+export async function replaceAssignments(items: Assignment[]) {
+  const connection = await db();
+  await connection.withTransactionAsync(async () => {
+    await connection.runAsync('DELETE FROM assignments');
+    for (const item of items) {
+      await connection.runAsync(
+        `INSERT INTO assignments (id, facility, title, due_label, evidence_required, risk)
+          VALUES (?, ?, ?, ?, ?, ?)`,
+        item.id,
+        item.facility,
+        item.title,
+        item.dueLabel,
+        item.evidenceRequired,
+        item.risk,
+      );
+    }
+  });
 }
 
 export async function replaceCorrectionAssignments(items: Assignment[]) {

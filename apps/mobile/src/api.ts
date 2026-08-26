@@ -12,7 +12,9 @@ type MobileBootstrap = {
     title: string;
     dueDate: string;
     frequency: string;
+    status: 'OPEN' | 'IN_PROGRESS' | 'AWAITING_REVIEW' | 'COMPLETE';
     risk: Assignment['risk'];
+    assignedTo: string;
     evidenceRequired: string;
   }[];
   submissions: {
@@ -25,7 +27,20 @@ type MobileBootstrap = {
   }[];
 };
 
-export async function fetchCorrectionAssignments(): Promise<Assignment[]> {
+function dueLabel(dueDate: string) {
+  const [year, month, day] = dueDate.split('-').map(Number);
+  const due = Date.UTC(year, month - 1, day);
+  const now = new Date();
+  const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  const days = Math.round((due - today) / 86_400_000);
+  if (days === 0) return 'Due today';
+  if (days === 1) return 'Due tomorrow';
+  if (days > 1) return `Due in ${days} days`;
+  if (days === -1) return 'Overdue by 1 day';
+  return `Overdue by ${Math.abs(days)} days`;
+}
+
+export async function fetchWorkspaceAssignments(): Promise<{ assignments: Assignment[]; corrections: Assignment[] }> {
   const response = await fetch(`${API_URL}/api/mobile/bootstrap`);
   if (!response.ok) throw new Error(`Workspace refresh failed with status ${response.status}`);
   const workspace = await response.json() as MobileBootstrap;
@@ -40,7 +55,7 @@ export async function fetchCorrectionAssignments(): Promise<Assignment[]> {
     }
   }
 
-  return [...latestByObligation.values()].flatMap((submission) => {
+  const corrections = [...latestByObligation.values()].flatMap((submission) => {
     if (submission.reviewStatus !== 'CORRECTION_REQUESTED') return [];
     const obligation = obligations.get(submission.obligationId);
     if (!obligation) return [];
@@ -56,6 +71,26 @@ export async function fetchCorrectionAssignments(): Promise<Assignment[]> {
       correctionReviewedAt: submission.reviewedAt,
     }];
   });
+
+  const correctionIds = new Set(corrections.map((item) => item.id));
+  const assignments = [...workspace.obligations]
+    .sort((left, right) => left.dueDate.localeCompare(right.dueDate))
+    .flatMap((obligation) => {
+      if (obligation.assignedTo !== 'Jordan Lee') return [];
+      if (!['OPEN', 'IN_PROGRESS'].includes(obligation.status)) return [];
+      if (correctionIds.has(obligation.id)) return [];
+      const facility = facilities.get(obligation.facilityId);
+      return [{
+        id: obligation.id,
+        facility: facility?.name ?? 'Assigned facility',
+        title: obligation.title,
+        dueLabel: dueLabel(obligation.dueDate),
+        evidenceRequired: obligation.evidenceRequired,
+        risk: obligation.risk,
+      }];
+    });
+
+  return { assignments, corrections };
 }
 
 export async function syncQueuedSubmissions(submissions: QueuedSubmission[]) {

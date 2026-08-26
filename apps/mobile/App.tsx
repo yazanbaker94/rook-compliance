@@ -29,12 +29,13 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView, initialWindowMetrics } from 'react-native-safe-area-context';
-import { fetchCorrectionAssignments, syncQueuedSubmissions } from './src/api';
+import { fetchWorkspaceAssignments, syncQueuedSubmissions } from './src/api';
 import {
   initializeDatabase,
   listAssignments,
   listCorrectionAssignments,
   listSubmissions,
+  replaceAssignments,
   replaceCorrectionAssignments,
   saveSubmission,
 } from './src/storage';
@@ -73,11 +74,13 @@ export default function App() {
     setSubmissions(nextSubmissions);
   }
 
-  async function refreshCorrections() {
+  async function refreshWorkspace() {
     try {
-      const latest = await fetchCorrectionAssignments();
-      await replaceCorrectionAssignments(latest);
-      setCorrections(latest);
+      const latest = await fetchWorkspaceAssignments();
+      await replaceAssignments(latest.assignments);
+      await replaceCorrectionAssignments(latest.corrections);
+      setAssignments(latest.assignments);
+      setCorrections(latest.corrections);
     } catch {
       // The field workflow remains available from SQLite when the office API is unavailable.
     }
@@ -88,7 +91,7 @@ export default function App() {
       .then(async () => {
         setCorrections(await listCorrectionAssignments());
         await refresh();
-        await refreshCorrections();
+        await refreshWorkspace();
       })
       .catch((error) => Alert.alert('Database error', String(error)))
       .finally(() => setLoading(false));
@@ -96,10 +99,10 @@ export default function App() {
     const listener = Network.addNetworkStateListener((state) => {
       const online = Boolean(state.isConnected && state.isInternetReachable !== false);
       setIsOnline(online);
-      if (online) void refreshCorrections();
+      if (online) void refreshWorkspace();
     });
     const appStateListener = AppState.addEventListener('change', (state) => {
-      if (state === 'active') void refreshCorrections();
+      if (state === 'active') void refreshWorkspace();
     });
     return () => {
       listener.remove();
@@ -109,7 +112,7 @@ export default function App() {
 
   useEffect(() => {
     if (!isOnline) return undefined;
-    const interval = setInterval(() => { void refreshCorrections(); }, 20_000);
+    const interval = setInterval(() => { void refreshWorkspace(); }, 20_000);
     return () => clearInterval(interval);
   }, [isOnline]);
 
@@ -120,7 +123,7 @@ export default function App() {
     try {
       const result = await syncQueuedSubmissions(submissions);
       await refresh();
-      await refreshCorrections();
+      await refreshWorkspace();
       if (result.reason === 'empty') Alert.alert('Everything is synced', 'There are no pending field records.');
       if (result.reason === 'offline') Alert.alert('Saved offline', 'Your records are safe on this device. Sync when a connection is available.');
       if (result.reason === 'success') Alert.alert('Sync complete', `${result.synced} field record${result.synced === 1 ? '' : 's'} sent for consultant review.`);
