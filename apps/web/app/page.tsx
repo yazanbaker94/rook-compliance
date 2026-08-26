@@ -97,6 +97,7 @@ export default function Home() {
   function navigate(next: View) { if (window.location.hash === `#${next}`) setView(next); else window.location.hash = next; }
   function notify(message: string) { setToast(message); window.setTimeout(() => setToast(''), 3200); }
   function requestImport() { navigate('documents'); setImportRequest(value => value + 1); }
+  const consumeImportRequest = useCallback(() => setImportRequest(0), []);
 
   const shellTextures = {
     '--paper-texture': brandAssets.paper,
@@ -117,7 +118,7 @@ export default function Home() {
       {data && view === 'overview' && <Overview data={data} navigate={navigate} />}
       {data && view === 'facilities' && <FacilitiesView data={data} navigate={navigate} />}
       {data && view === 'obligations' && <ObligationsView data={data} refresh={refresh} notify={notify} navigate={navigate} openSubmission={id => { setFieldFocus(id); navigate('field'); }} />}
-      {data && view === 'documents' && <DocumentsView data={data} refresh={refresh} notify={notify} importRequest={importRequest} />}
+      {data && view === 'documents' && <DocumentsView data={data} refresh={refresh} notify={notify} importRequest={importRequest} onImportRequestHandled={consumeImportRequest} />}
       {data && view === 'field' && <FieldView data={data} refresh={refresh} notify={notify} initialSubmissionId={fieldFocus} />}
       {toast && <div className="toast" role="status">{toast}</div>}
     </section>
@@ -197,10 +198,17 @@ function ObligationsView({ data, refresh, notify, navigate, openSubmission }: { 
   </div>;
 }
 
-function DocumentsView({ data, refresh, notify, importRequest }: { data: WorkspaceData; refresh: () => Promise<void>; notify: (message: string) => void; importRequest: number }) {
+function DocumentsView({ data, refresh, notify, importRequest, onImportRequestHandled }: { data: WorkspaceData; refresh: () => Promise<void>; notify: (message: string) => void; importRequest: number; onImportRequestHandled: () => void }) {
   const fileRef = useRef<HTMLInputElement>(null); const [facilityId, setFacilityId] = useState(data.facilities[0]?.id ?? ''); const [selectedId, setSelectedId] = useState(data.proposals.find(item => item.status === 'PROPOSED')?.id ?? data.proposals[0]?.id ?? ''); const [busy, setBusy] = useState(''); const [editing, setEditing] = useState(false); const [draft, setDraft] = useState({ title: '', frequency: '', requirement: '' });
   const selected = data.proposals.find(item => item.id === selectedId) ?? data.proposals[0]; const document = data.documents.find(item => item.id === selected?.documentId) ?? data.documents[0]; const documentProposals = data.proposals.filter(item => item.documentId === selected?.documentId); const position = Math.max(documentProposals.findIndex(item => item.id === selected?.id), 0); const remaining = documentProposals.filter(item => item.status === 'PROPOSED').length;
-  useEffect(() => { if (importRequest > 0) window.setTimeout(() => fileRef.current?.click(), 50); }, [importRequest]);
+  useEffect(() => {
+    if (importRequest <= 0) return;
+    const timer = window.setTimeout(() => {
+      fileRef.current?.click();
+      onImportRequestHandled();
+    }, 50);
+    return () => window.clearTimeout(timer);
+  }, [importRequest, onImportRequestHandled]);
   function startEditing() { if (!selected) return; setDraft({ title: selected.title, frequency: selected.frequency, requirement: selected.requirement }); setEditing(true); }
   async function importPdf(file?: File) { if (!file) return; setBusy('Importing approval…'); try { const form = new FormData(); form.append('file', file); const extractionResponse = await fetch(`${DOCUMENT_AI_URL}/extract-file`, { method: 'POST', body: form }); const extraction = await extractionResponse.json() as { document_name?: string; proposals?: { title: string; requirement: string; frequency: string; source_page: number; source_text: string; confidence: number }[]; detail?: string }; if (!extractionResponse.ok) throw new Error(extraction.detail ?? 'The PDF could not be extracted.'); if (!extraction.proposals?.length) throw new Error('No enforceable clauses were found. Try the synthetic approval PDF.'); const imported = await graphql<{ importDocument: DocumentRecord }>(`mutation Import($facilityId: ID!, $name: String!, $proposals: [ImportedProposalInput!]!) { importDocument(facilityId: $facilityId, name: $name, proposals: $proposals) { id name facilityId createdAt } }`, { facilityId, name: extraction.document_name ?? file.name, proposals: extraction.proposals.map(item => ({ title: item.title, requirement: item.requirement, frequency: item.frequency, sourcePage: item.source_page, sourceText: item.source_text, confidence: item.confidence })) }); const next = await graphql<WorkspaceData>(WORKSPACE_QUERY); const first = next.proposals.find(item => item.documentId === imported.importDocument.id); await refresh(); if (first) setSelectedId(first.id); notify(`${extraction.proposals.length} proposal${extraction.proposals.length === 1 ? '' : 's'} extracted and saved for review.`); } catch (error) { notify(error instanceof Error ? error.message : 'The approval could not be imported.'); } finally { setBusy(''); if (fileRef.current) fileRef.current.value = ''; } }
   async function saveEdit() { if (!selected) return; setBusy('Saving proposal…'); try { await graphql(`mutation Edit($id: ID!, $input: UpdateProposalInput!) { updateProposal(id: $id, input: $input) { id title requirement frequency } }`, { id: selected.id, input: draft }); await refresh(); setEditing(false); notify('Proposal edits saved to the audit trail.'); } catch (error) { notify(error instanceof Error ? error.message : 'The proposal could not be saved.'); } finally { setBusy(''); } }
