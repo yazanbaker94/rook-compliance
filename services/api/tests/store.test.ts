@@ -40,6 +40,14 @@ describe('RookStore', () => {
     expect(store.listAuditEvents('Obligation', created.id)[0]?.action).toBe('OBLIGATION_CREATED');
   });
 
+  it('assigns an accepted proposal obligation and records the handoff', () => {
+    store.reviewProposal('prop-02', 'ACCEPTED');
+    const assigned = store.updateObligationAssignee('obl-prop-02', 'Jordan Lee');
+    expect(assigned.assignedTo).toBe('Jordan Lee');
+    expect(store.listAuditEvents('Obligation', assigned.id)[0]).toMatchObject({ action: 'OBLIGATION_ASSIGNED' });
+    expect(JSON.parse(store.listAuditEvents('Obligation', assigned.id)[0]!.detail)).toEqual({ previousAssignee: 'Unassigned', assignedTo: 'Jordan Lee' });
+  });
+
   it('persists proposal edits before accepting them', () => {
     store.updateProposal('prop-02', { title: 'Archive laboratory certificates', requirement: 'Keep certificates for five years.', frequency: 'For each sample' });
     store.reviewProposal('prop-02', 'ACCEPTED');

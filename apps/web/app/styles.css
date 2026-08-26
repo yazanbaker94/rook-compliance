@@ -484,6 +484,10 @@ textarea { resize: vertical; }
 .detail-list dt, .drawer-submission dt { font: 600 8px var(--font-technical), monospace; text-transform: uppercase; }
 .detail-list dd { font: 500 10px var(--font-technical), monospace; }
 .detail-list dd small { margin-top: 4px; color: #465650; font-size: 8px; }
+.detail-list > .assignee-row { min-height: 116px; }
+.assignee-editor { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: stretch; }
+.assignee-editor select { min-width: 0; height: 40px; font-size: 10px; }
+.assignee-editor .secondary-button { min-height: 40px; padding: 8px 10px; font-size: 8px; white-space: nowrap; }
 .drawer-panel { padding: 20px; }
 .drawer-submission { display: grid; gap: 17px; }
 .drawer-submission-heading { display: flex; justify-content: space-between; }

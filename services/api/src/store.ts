@@ -101,6 +101,15 @@ export class RookStore {
     return obligation;
   }
 
+  updateObligationAssignee(id: string, assignedTo: string) {
+    const obligation = this.obligations.find(item => item.id === id);
+    if (!obligation) throw new Error(`Obligation ${id} was not found`);
+    const previousAssignee = obligation.assignedTo;
+    obligation.assignedTo = assignedTo;
+    this.recordAudit('demo-consultant', 'OBLIGATION_ASSIGNED', 'Obligation', id, { previousAssignee, assignedTo });
+    return obligation;
+  }
+
   reviewSubmission(id: string, status: SubmissionReviewStatus, note: string) {
     const submission = this.submissions.find(item => item.id === id);
     if (!submission) throw new Error(`Submission ${id} was not found`);

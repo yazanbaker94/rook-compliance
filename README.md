@@ -60,10 +60,11 @@ The web demo includes:
 
 - live portfolio metrics and explainable facility readiness;
 - a searchable, filterable obligation register with source-linked detail;
-- creation and status updates that persist through GraphQL;
+- creation, owner assignment, and status updates that persist through GraphQL;
 - real PDF upload and draft extraction with physical page citations;
 - editable approval proposals with confidence, accept, and reject decisions;
 - accepted proposals appearing immediately in the obligation register;
+- audited reassignment of accepted proposals into the Android field worker's live queue;
 - field-evidence correction and approval workflows with reviewer notes and audit history; and
 - URL-safe navigation with live API connectivity status.
 

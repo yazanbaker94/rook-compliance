@@ -222,6 +222,24 @@ export class PrismaRookStore {
     });
   }
 
+  async updateObligationAssignee(id: string, assignedTo: string) {
+    return prisma.$transaction(async tx => {
+      const current = await tx.obligation.findUnique({ where: { id }, select: { assignedTo: true } });
+      if (!current) throw new Error(`Obligation ${id} was not found`);
+      const obligation = await tx.obligation.update({ where: { id }, data: { assignedTo } });
+      await tx.auditEvent.create({
+        data: {
+          actorId: 'demo-consultant',
+          action: 'OBLIGATION_ASSIGNED',
+          entityType: 'Obligation',
+          entityId: id,
+          metadata: { previousAssignee: current.assignedTo ?? 'Unassigned', assignedTo },
+        },
+      });
+      return mapObligation(obligation);
+    });
+  }
+
   async reviewSubmission(id: string, status: SubmissionReviewStatus, note: string) {
     return prisma.$transaction(async tx => {
       const submission = await tx.fieldSubmission.update({ where: { id }, data: { reviewStatus: status, reviewNote: note, reviewedAt: new Date() } });

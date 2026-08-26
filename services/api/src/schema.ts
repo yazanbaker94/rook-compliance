@@ -48,6 +48,7 @@ export const schema = createSchema({
       importDocument(facilityId: ID!, name: String!, proposals: [ImportedProposalInput!]!): Document!
       createObligation(input: CreateObligationInput!): Obligation!
       updateObligationStatus(id: ID!, status: ObligationStatus!): Obligation!
+      assignObligation(id: ID!, assignedTo: String!): Obligation!
       reviewSubmission(id: ID!, status: SubmissionReviewStatus!, note: String!): FieldSubmission!
       syncMobile(changes: [MobileChangeInput!]!): SyncResult!
     }
@@ -69,6 +70,7 @@ export const schema = createSchema({
       importDocument: (_root, args: { facilityId: string; name: string; proposals: unknown[] }) => dataStore.importDocument(args.facilityId, z.string().min(3).max(180).parse(args.name), z.array(importedProposalSchema).min(1).max(50).parse(args.proposals)),
       createObligation: (_root, args: { input: unknown }) => dataStore.createObligation(createObligationSchema.parse(args.input)),
       updateObligationStatus: (_root, args: { id: string; status: 'OPEN' | 'IN_PROGRESS' | 'AWAITING_REVIEW' | 'COMPLETE' }) => dataStore.updateObligationStatus(args.id, args.status),
+      assignObligation: (_root, args: { id: string; assignedTo: string }) => dataStore.updateObligationAssignee(args.id, z.string().min(2).max(120).parse(args.assignedTo)),
       reviewSubmission: (_root, args: { id: string; status: 'PENDING' | 'APPROVED' | 'CORRECTION_REQUESTED'; note: string }) => dataStore.reviewSubmission(args.id, args.status, z.string().max(500).parse(args.note)),
       syncMobile: (_root, args: { changes: unknown[] }) => dataStore.syncMobile(z.array(mobileChangeSchema).parse(args.changes)),
     },

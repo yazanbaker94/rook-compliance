@@ -17,7 +17,7 @@ Verified on August 25, 2026:
 - Container health checks passed for PostgreSQL, the API, and document intelligence; the web container returned HTTP 200.
 - Cloudflare Worker routing passed live checks at `https://swoop.video/corvus` for the dashboard, health endpoint, GraphQL, Android bootstrap, and document-service health; the existing Swoop website remained at the domain root.
 - The raw VPS origin rejected requests without the private origin token.
-- Real Chrome acceptance tests passed for hash navigation/reload, obligation search/filter/create/status/detail, proposal edit/accept, PDF upload/extraction, field correction/approval, audit history, and source citation display.
+- Real Chrome acceptance tests passed for hash navigation/reload, obligation search/filter/create/status/detail/assignment, proposal edit/accept, PDF upload/extraction, field correction/approval, audit history, source citation display, and web-to-Android assignment handoff.
 - The existing VPS-hosted site returned HTTP 200 after both Caddy configuration reloads.
 - The production dependency audit reports zero known vulnerabilities for both the API and web workspaces.
 

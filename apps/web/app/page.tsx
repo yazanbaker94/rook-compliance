@@ -22,6 +22,7 @@ const DEFAULT_API_URL = process.env.NODE_ENV === 'production' ? 'https://swoop.v
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? DEFAULT_API_URL;
 const DOCUMENT_AI_URL = process.env.NEXT_PUBLIC_DOCUMENT_AI_URL ?? `${API_URL}/document-ai`;
 const ASSET_PREFIX = process.env.NODE_ENV === 'production' ? '/corvus' : '';
+const ASSIGNEES = ['Unassigned', 'Jordan Lee', 'Avery Chen', 'Morgan Reed'];
 const brandAssets = {
   mark: `${ASSET_PREFIX}/brand/rook-bird.png`,
   terrain: `url("${ASSET_PREFIX}/brand/terrain-texture.png")`,
@@ -162,9 +163,12 @@ function ObligationsView({ data, refresh, notify, navigate, openSubmission }: { 
   const [selectedId, setSelectedId] = useState(data.obligations[0]?.id ?? '');
   const [drawerTab, setDrawerTab] = useState<ObligationTab>('details');
   const [saving, setSaving] = useState(false);
+  const [assignmentSaving, setAssignmentSaving] = useState(false);
+  const [assigneeEdits, setAssigneeEdits] = useState<Record<string, string>>({});
   const [previewPhoto, setPreviewPhoto] = useState<number | null>(null);
   const filtered = data.obligations.filter(item => (facilityFilter === 'ALL' || item.facilityId === facilityFilter) && (statusFilter === 'ALL' || item.status === statusFilter) && `${item.title} ${item.facility.name} ${item.assignedTo}`.toLowerCase().includes(query.toLowerCase()));
   const selected = filtered.find(item => item.id === selectedId) ?? filtered[0];
+  const assignee = selected ? assigneeEdits[selected.id] ?? selected.assignedTo : 'Unassigned';
   const sourceProposal = selected ? data.proposals.find(item => `obl-${item.id}` === selected.id) : undefined;
   const relatedSubmissions = selected ? data.submissions.filter(item => item.obligationId === selected.id) : [];
   const relatedSubmissionIds = new Set(relatedSubmissions.map(item => item.id));
@@ -189,9 +193,24 @@ function ObligationsView({ data, refresh, notify, navigate, openSubmission }: { 
     }
   }
 
+  async function saveAssignment() {
+    if (!selected || assignee === selected.assignedTo) return;
+    setAssignmentSaving(true);
+    try {
+      await graphql(`mutation Assign($id: ID!, $assignedTo: String!) { assignObligation(id: $id, assignedTo: $assignedTo) { id assignedTo } }`, { id: selected.id, assignedTo: assignee });
+      await refresh();
+      setAssigneeEdits(value => { const next = { ...value }; delete next[selected.id]; return next; });
+      notify(assignee === 'Unassigned' ? 'Obligation is now unassigned.' : `Obligation assigned to ${assignee}.`);
+    } catch (error) {
+      notify(error instanceof Error ? error.message : 'Assignment could not be updated.');
+    } finally {
+      setAssignmentSaving(false);
+    }
+  }
+
   return <div className="register-layout"><section className="panel register-panel"><div className="register-tabs"><strong>Obligation register</strong><span>Live API data</span></div><div className="filter-bar"><label>Facility<select aria-label="Filter by facility" value={facilityFilter} onChange={event => setFacilityFilter(event.target.value)}><option value="ALL">All facilities</option>{data.facilities.map(item => <option value={item.id} key={item.id}>{item.name}</option>)}</select></label><label>Status<select aria-label="Filter by status" value={statusFilter} onChange={event => setStatusFilter(event.target.value)}><option value="ALL">All statuses</option>{(['OPEN', 'IN_PROGRESS', 'AWAITING_REVIEW', 'COMPLETE'] as ObligationStatus[]).map(item => <option value={item} key={item}>{titleCase(item)}</option>)}</select></label><label className="search-field">Search<input aria-label="Search obligations" placeholder="Title, facility, or owner" value={query} onChange={event => setQuery(event.target.value)} /></label></div><div className="record-count">{filtered.length} of {data.obligations.length} obligations · Select a row to open details</div><div className="register-table" role="table" aria-label="Obligation register"><div className="register-head" role="row"><span>Obligation</span><span>Facility</span><span>Next due</span><span>Status</span><span>Risk</span><span>Owner / action</span></div>{filtered.map(item => <button type="button" role="row" aria-selected={selected?.id === item.id} className={`register-row ${selected?.id === item.id ? 'selected' : ''}`} key={item.id} onClick={() => selectObligation(item.id)}><span><strong>{item.title}</strong><small>{item.frequency} · {item.evidenceRequired}</small></span><span>{item.facility.name}</span><span><strong>{formatDate(item.dueDate)}</strong><small>{formatDue(item.dueDate)}</small></span><span><StatusPill status={item.status} /></span><span><span className={`risk-pill ${item.risk.toLowerCase()}`}>{titleCase(item.risk)}</span></span><span className="register-owner"><span>{item.assignedTo}</span><b>{selected?.id === item.id ? 'OPEN' : 'VIEW →'}</b></span></button>)}</div>{!filtered.length && <div className="empty-state">No obligations match these filters.</div>}</section>
     <aside className="detail-drawer">{selected ? <><div className="drawer-heading"><span className={`priority-dot ${selected.risk.toLowerCase()}`} /><div><small>{titleCase(selected.status)}</small><h2>{selected.title}</h2><p>{selected.frequency} · {selected.facility.name}</p></div></div><div className="detail-tabs" role="tablist" aria-label="Obligation information">{(['details', 'evidence', 'audit'] as ObligationTab[]).map(tab => <button type="button" role="tab" aria-selected={drawerTab === tab} className={drawerTab === tab ? 'active' : ''} onClick={() => setDrawerTab(tab)} key={tab}>{titleCase(tab)}</button>)}</div>
-      {drawerTab === 'details' && <dl className="detail-list" role="tabpanel"><div><dt>Facility</dt><dd>{selected.facility.name}<small>{selected.facility.location}</small></dd></div><div><dt>Next due</dt><dd>{formatDate(selected.dueDate)}<small>{formatDue(selected.dueDate)}</small></dd></div><div><dt>Owner</dt><dd>{selected.assignedTo}</dd></div><div><dt>Risk</dt><dd><span className={`risk-pill ${selected.risk.toLowerCase()}`}>{titleCase(selected.risk)}</span></dd></div><div><dt>Evidence required</dt><dd>{selected.evidenceRequired}</dd></div>{sourceProposal && <div><dt>Source citation</dt><dd><strong>Page {sourceProposal.sourcePage}</strong><small>“{sourceProposal.sourceText}”</small></dd></div>}</dl>}
+      {drawerTab === 'details' && <dl className="detail-list" role="tabpanel"><div><dt>Facility</dt><dd>{selected.facility.name}<small>{selected.facility.location}</small></dd></div><div><dt>Next due</dt><dd>{formatDate(selected.dueDate)}<small>{formatDue(selected.dueDate)}</small></dd></div><div className="assignee-row"><dt>Owner</dt><dd><div className="assignee-editor"><select aria-label="Assign obligation owner" value={assignee} disabled={assignmentSaving} onChange={event => setAssigneeEdits(value => ({ ...value, [selected.id]: event.target.value }))}>{ASSIGNEES.map(owner => <option value={owner} key={owner}>{owner}</option>)}</select><button type="button" className="secondary-button" disabled={assignmentSaving || assignee === selected.assignedTo} onClick={() => void saveAssignment()}>{assignmentSaving ? 'Saving…' : 'Save assignment'}</button></div><small>{assignee === 'Jordan Lee' ? 'Appears in Jordan Lee’s Rook Field assignments.' : assignee === 'Unassigned' ? 'Choose Jordan Lee to send this work to Rook Field.' : `Assigned to ${assignee}.`}</small></dd></div><div><dt>Risk</dt><dd><span className={`risk-pill ${selected.risk.toLowerCase()}`}>{titleCase(selected.risk)}</span></dd></div><div><dt>Evidence required</dt><dd>{selected.evidenceRequired}</dd></div>{sourceProposal && <div><dt>Source citation</dt><dd><strong>Page {sourceProposal.sourcePage}</strong><small>“{sourceProposal.sourceText}”</small></dd></div>}</dl>}
       {drawerTab === 'evidence' && <section className="drawer-panel" role="tabpanel">{relatedSubmissions.length ? relatedSubmissions.map(submission => <article className="drawer-submission" key={submission.id}><div className="drawer-submission-heading"><div><strong>{submission.inspector}</strong><small>{formatDateTime(submission.completedAt)}</small></div><StatusPill status={submission.reviewStatus} /></div><dl><div><dt>Evidence summary</dt><dd>{submission.reading}</dd></div><div><dt>Photos</dt><dd>{submission.photoCount ? `${submission.photoCount} geotagged` : 'Not required'}</dd></div><div><dt>Field note</dt><dd>{submission.notes.split(' · ')[0]}</dd></div></dl>{submission.id === 'sub-groundwater-01' && <EvidencePhotoStrip count={submission.photoCount} onOpen={setPreviewPhoto} />}<button type="button" className="secondary-button drawer-wide-button" onClick={() => openSubmission(submission.id)}>Open full field review</button></article>) : <div className="drawer-empty"><strong>No evidence synced yet</strong><p>Field submissions, readings, and photos will appear here after the mobile app syncs.</p></div>}</section>}
       {drawerTab === 'audit' && <section className="drawer-panel drawer-audit" role="tabpanel">{relatedAudit.length ? relatedAudit.map(event => <article key={event.id}><span className="audit-marker">✓</span><div><strong>{titleCase(event.action)}</strong><small>{formatDateTime(event.createdAt)} · {event.actorId}</small><p>{formatAuditDetail(event.detail)}</p></div></article>) : <div className="drawer-empty"><strong>No recorded workflow events</strong><p>Status changes, document decisions, and evidence reviews will appear here.</p></div>}</section>}
       <div className="drawer-actions">{selected.status === 'AWAITING_REVIEW' ? <button type="button" className="primary-button" onClick={() => navigate('field')}>Review evidence</button> : <><button type="button" className="secondary-button" disabled={saving || selected.status !== 'OPEN'} onClick={() => void setStatus('IN_PROGRESS')}>Start work</button><button type="button" className="primary-button" disabled={saving || selected.status !== 'IN_PROGRESS'} onClick={() => void setStatus('COMPLETE')}>{saving ? 'Saving…' : selected.status === 'COMPLETE' ? 'Completed' : 'Mark complete'}</button></>}</div></> : <div className="empty-state">Select an obligation.</div>}</aside>
@@ -263,6 +282,7 @@ function formatAuditDetail(value: string) {
   try {
     const detail = JSON.parse(value) as Record<string, unknown>;
     if (typeof detail.note === 'string' && detail.note) return detail.note;
+    if (typeof detail.assignedTo === 'string') return typeof detail.previousAssignee === 'string' ? `Assigned to ${detail.assignedTo} (previously ${detail.previousAssignee}).` : `Assigned to ${detail.assignedTo}.`;
     if (typeof detail.status === 'string') return `Status set to ${titleCase(detail.status)}.`;
     if (typeof detail.title === 'string') return detail.title;
     if (typeof detail.sourcePage === 'number') return `Decision recorded for source page ${detail.sourcePage}.`;
